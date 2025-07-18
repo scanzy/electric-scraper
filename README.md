@@ -159,16 +159,27 @@ The configuration file is a json file, with the following structure:
 {
   "<website1>": {
     "<type1>": {
+
+      // regex patterns to match manuCode
       "patterns": [
         "[0-9]{7}-[0-9]{2}",
         "[0-9]{5}-[0-9]{3}",
       ],
+
+      // url template with {manuCode} placeholder
       "url": "<url_template_with_{manuCode}>",
+
+      // css selector to wait for page to load
+      "wait": "<css selector>",
+
+      // data to scrape
       "data": {
         "<field1>": "<css selector>",
         "<field2>": "<css selector>",
         // other fields
       },
+
+      // files to download
       "files": {
         "<file1>": {
           "selector": "<css selector>",
@@ -181,7 +192,7 @@ The configuration file is a json file, with the following structure:
         // other files
       },
 
-      // uses this website if no patterns match
+      // flag to use this configuration if no patterns match
       "fallback": true
     },
     // other types
@@ -206,9 +217,3 @@ Example: `ReadConfig(website="example.com", type="connector")`
 
 WriteConfig takes a dictionary as input, and writes it to the configuration file.
 Example: `WriteConfig(config, website="example.com", type="connector")`
-
-
-## Development
-
-- [ ] scouting with selenium to scrape test data
-- [ ] basic MCP server
