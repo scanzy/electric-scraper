@@ -19,6 +19,12 @@ TIMEOUT = 10
 CSS_SELECTORS = {
     "title": "h1",
     "fileUL": "td[data-key='ul']",
+
+    # only for contacts
+    "AWG": "td[data-key='wireSizeAwg']",
+    "mm2": "td[data-key='wireSizeMm']",
+
+    # documentation files
     "datasheet": ".cmp-resourcelist__resources-item:first-of-type a.cmp-resourcelist__action-download",
     "drawing":   ".cmp-resourcelist__accordion__content a.cmp-resourcelist__action-download",
 }

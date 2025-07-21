@@ -46,6 +46,7 @@ Available tools (see below for details):
         "--with", "fastmcp",
         "--with", "selenium",
         "--with", "html2text",
+        "--with", "requests",
         "/path/to/server.py"
       ]
     },
@@ -129,7 +130,7 @@ The function takes the following parameters:
 - `manuCodes`: list of manifacturer codes of the components (required)
 - `type`: type of the component (connector, cable, etc.)
 - `website`: the website to scrape the data from
-- `data`: dictionary with information to be scraped
+- `fields`: dictionary with information to be scraped
 - `files`: dictionary with the files to download
 - `format`: "html", "md", "txt" (default = md)
 - `closeBrowser`: whether to close the browser after scraping (default = True)
@@ -144,7 +145,11 @@ Structure of `files` dictionary, in input:
     - `selector`: css selector to find the download link/button
     - `path`: path of the file, saved to disk
 
-The `path` field supports placeholders, like `{manuCode}`, `{type}`, and data fields.
+The `path` field supports placeholders:
+- `{manuCode}`: manifacturer code
+- `{type}`: type of the component
+- `{ext}`: extension of the file
+- scraped data fields, from `fields` dictionary
 
 Example input:
 ```json
@@ -160,7 +165,7 @@ Example input:
   "files": {
     "datasheet": {
       "selector": "#main > a.datasheet",
-      "path": "/path/to/datasheet-{manuCode}-{color}.pdf"
+      "path": "/path/to/datasheet-{manuCode}-{color}.{ext}"
     }
   }
 }
@@ -258,3 +263,10 @@ When calling `ScrapeComponent`, the following steps are performed:
 - urls of files are found, using url templates with data fields, or CSS selectors
 - files are downloaded, using the "path" field of the file configuration
 - the browser is closed (if configured)
+
+
+# Development
+Currently, the project is in development.
+
+TODO:
+- [ ] add support for images, not working yet
