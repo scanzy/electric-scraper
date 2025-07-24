@@ -267,6 +267,10 @@ When calling `ScrapeComponent`, the following steps are performed:
 
 # Development
 Currently, the project is in development.
+However, basic field scraping works properly
 
 TODO:
+- [ ] improve and activate pdf scraping
 - [ ] add support for images, not working yet
+- [ ] implement fallback for unmatched manuCodes
+- [ ] add duckduckgo search, as alternative to pattern matching

@@ -4,11 +4,13 @@ import os
 import json
 import re
 import typing as t
+import pathlib as pl
 
 from src.type_hints import Config, ConfigEntry, FileConfigEntry
 
 
-CONFIG_FILE = "electric-scraper-config.json"
+# config file in the root of the project
+CONFIG_FILE = pl.Path(__file__).parent.parent / "electric-scraper-config.json"
 
 
 # JSON FILE OPERATIONS
