@@ -43,7 +43,7 @@ def GetDownloadPath() -> str:
 def GetBrowser() -> webdriver.Firefox:
     """Gets a browser, opening it if needed."""
     global browser
-    if browser is None:
+    if browser is None or not browser.service.process:
         logger.info("Opening new browser...")
         browser = OpenBrowser()
         logger.info("New browser opened")
@@ -82,3 +82,12 @@ def WaitElement(driver: webdriver.Firefox, selector: str) -> None:
     logger.info(f"Waiting for element: {selector}")
     wait = WebDriverWait(driver, BROWSER_TIMEOUT)
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+
+
+def CloseBrowser() -> None:
+    """Closes the browser."""
+    global browser
+    if browser is not None:
+        browser.quit()
+        browser = None
+        logger.info("Browser closed")

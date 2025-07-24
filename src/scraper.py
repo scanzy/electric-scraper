@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 from src.type_hints import ScrapedComponentData
-from src.browser import GetBrowser, WaitElement
+from src.browser import GetBrowser, WaitElement, CloseBrowser
 from src.config import ReadConfig, MatchPatterns, FillMissingConfig
 from src.files import ScrapeFiles
 
@@ -90,8 +90,7 @@ def ScrapeComponent(
     # closes browser if needed
     finally:    
         if closeBrowser:
-            driver.quit()
-            logger.info("Browser closed")
+            CloseBrowser()
 
 
 def ScrapeFields(driver: webdriver.Firefox,
