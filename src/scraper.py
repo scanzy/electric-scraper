@@ -21,6 +21,7 @@ log.basicConfig(level=log.INFO, format='%(asctime)s - %(message)s')
 logger = log.getLogger(__name__)
 
 
+SEARCH_BACKEND = "duckduckgo, bing, brave, google"
 
 
 # CANDIDATE WEBSITES MATCHING
@@ -92,7 +93,7 @@ def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[Candidat
 
     # searches the web, composing candidates
     candidates = []
-    for result in DDGS().text(query, max_results=5):
+    for result in DDGS().text(query, max_results=5, backend=SEARCH_BACKEND):
 
         # extracts website from url, removing protocol and www  
         # https://www.molex.com/... -> molex.com
@@ -141,11 +142,12 @@ def MatchPatternToWebResults(pattern: str, manuCode: str, hints: list[str]) -> s
     regex = re.compile(pattern.replace("*", ".*").replace("{manuCode}", manuCode))
 
     # composes the search query (only on the specified website)
-    query = manuCode + " site:" + WebsiteFromUrl(pattern)
-    if hints: query += " " + " ".join(hints)
+    query = manuCode + (
+        "" if len(hints) == 0 else (" " + " ".join(hints))
+    ) + " " + "site:" + WebsiteFromUrl(pattern)
 
     # searches on the web, getting the first url matching the regex
-    for searchResult in DDGS().text(query, max_results=5):
+    for searchResult in DDGS().text(query, max_results=5, backend=SEARCH_BACKEND):
         if regex.match(searchResult["href"]):
             return searchResult["href"]
 

@@ -41,7 +41,7 @@ def ReadJsonFromFile() -> dict:
 
 
 def ReadConfig(website: str = "") -> Config:
-    """Read the configuration file, filtering by website, if specified."""
+    """Read the configuration file, filtering by website domain, if specified."""
 
     # reads config
     config = ReadJsonFromFile()
@@ -63,7 +63,9 @@ def ReadConfig(website: str = "") -> Config:
 
 
 def WriteConfig(entry: WebsiteEntry, website: str) -> bool:
-    """Overwrite an entry in the configuration file."""
+    """Overwrite an entry in the configuration file.
+    As website, use the domain of the website, not the full URL.
+    """
 
     # checks validity of entry
     CheckEntryValid(website, entry)
