@@ -8,10 +8,10 @@ import logging as log
 from ddgs import DDGS
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 
 from src.type_hints import ScrapedComponentData, Config, WebsiteEntry
-from src.browser import GetBrowser, WaitElement, CloseBrowser
+from src.browser import GetBrowser, WaitElement, CloseBrowser, RetryOnException, ResetBrowser
 from src.config import ReadConfig
 from src.files import ScrapeFiles
 
@@ -155,6 +155,7 @@ def MatchPatternToWebResults(url: str, manuCode: str, hints: list[str]) -> str:
     return ""
 
 
+@RetryOnException(on=InvalidSessionIdException, init=ResetBrowser)
 def ScrapeFromWebsite(
     manuCode: str,  
     entry: WebsiteEntry,
@@ -164,7 +165,7 @@ def ScrapeFromWebsite(
     format: t.Literal["html", "md", "txt"],
     closeBrowser: bool,
 ) -> ScrapedComponentData:
-    """Scrapes data of a component from a website."""
+    """Scrapes data of a component from a website, retrying on session expiration."""
 
     # detects if url is a pattern (contains *)
     if "*" in entry["url"]:

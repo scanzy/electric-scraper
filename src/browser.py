@@ -2,6 +2,7 @@
 
 import tempfile
 import logging
+import typing as t
 
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -91,3 +92,29 @@ def CloseBrowser() -> None:
         browser.quit()
         browser = None
         logger.info("Browser closed")
+
+
+def ResetBrowser() -> None:
+    """Resets the browser, closing it if needed."""
+    CloseBrowser()
+    OpenBrowser()
+
+
+def RetryOnException(on: t.Type[Exception], init: t.Callable[[], None]) -> t.Callable:
+    """Decorator that retries a function on an exception, re-initializing resources.
+    Example: reinit the browser when session expires.
+    """
+
+    def decorator(func: t.Callable) -> t.Any:
+        def decorated(*args, **kwargs) -> t.Any:
+            try:
+                return func(*args, **kwargs)
+            
+            # reinit resources on exception
+            except on:
+                logger.warning(f"Exception {on.__name__} raised, reinitializing resources...")
+                init()
+                return func(*args, **kwargs)
+
+        return decorated
+    return decorator
