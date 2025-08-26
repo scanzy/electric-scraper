@@ -18,7 +18,7 @@ The project allows to:
 - **scrape specific data** from the page, using the provided CSS selectors
 - **download files** from the page, using CSS selectors to find download links
 - **analyze new websites** to find scraping settings (CSS selectors, url templates, etc.)
-- **scrape multiple components** in a single call, using the same browser
+- **scrape multiple components** in a single call, using the same browser instance
 
 
 ## Requirements
@@ -32,7 +32,7 @@ The project allows to:
 
 - Clone the repository
 - To use functions as a library, install dependencies and import functions
-- To use the tools with MCP server, include this snippet in your configuration file:
+- To use the tools via MCP server, include this snippet in your configuration file:
 
 ```json
 {
@@ -58,7 +58,6 @@ The project allows to:
 ## Tools
 
 Available tools:
-- `SearchComponent`: searches for a components on the web
 - `ScrapeComponents`: scrapes data for components, starting from manifacturer codes
 - `ReadConfigDocs`: returns the [DOCS.md](DOCS.md) file, as detailed instructions for AI
 - `ReadConfig`: reads the configuration file, to check known websites and settings
@@ -73,11 +72,12 @@ Currently, the project is in development.
 However, basic field scraping works properly!
 
 TODO (high priority):
-- [ ] replace manuCode pattern matching with hints/keywords system
+- [x] replace manuCode pattern matching with hints/keywords system
+- [x] add config validation
+- [x] implement retry on other websites if scraping fails
+- [x] add selector to recognize not found items
 - [ ] add websearch for url pattern matching
-- [ ] implement retry on other websites if scraping fails
 - [ ] add prompt to let AI analyze new sites and add them to config
-- [ ] add selector to recognize not found items
 
 TODO (low priority):
 - [ ] add tests for MCP server

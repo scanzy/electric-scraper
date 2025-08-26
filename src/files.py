@@ -194,10 +194,13 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
     }
 
 
-def ScrapeFiles(driver: webdriver.Firefox,
-    files: dict[str, FileConfigEntry], data: dict[str, t.Optional[str]],
+def ScrapeFiles(
+    driver: webdriver.Firefox,
+    basePath: str,
+    files: dict[str, FileConfigEntry],
+    data:  dict[str, t.Optional[str]],
 ) -> dict[str, ScrapedFile]:
-    """Scrapes files from the current page, using the specified css selectors or urls."""
+    """Scrapes files from the current page, using the specified file config."""
 
     scrapedFiles = {}
     for tag, fileConfig in files.items():
@@ -216,13 +219,14 @@ def ScrapeFiles(driver: webdriver.Firefox,
             continue
 
         try:
-            # composes target path
+            # composes relative target path
             targetPath = fileConfig.get("path", None)
             if targetPath is None:
                 raise ValueError("'path' is not set for file {tag}")
             
-            # replaces placeholders with data
+            # replaces placeholders with data, and composes absolute path
             targetPath = targetPath.format(**data)
+            targetPath = os.path.join(basePath, targetPath)
 
             # tries to download file
             scrapedFiles[tag] = DownloadFile(driver, url, targetPath)

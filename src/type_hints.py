@@ -7,11 +7,11 @@ import typing as t
 # ===================
 
 
-class FileConfigEntry(t.TypedDict):
+class FileConfigEntry(t.TypedDict, total=False):
     """Configuration entry for a file to download."""
-    selector: str
-    url: str
-    filename: str
+    selector: str  # CSS selector to find download link (alternative to url)
+    url: str       # Direct URL template (alternative to selector)
+    path: str      # Target file path (relative to basePath) with placeholders
 
 
 class WebsiteEntry(t.TypedDict):
@@ -47,7 +47,7 @@ class ScrapedComponentData(t.TypedDict, total=False):
     """
     manuCode: str
     result: str # "success" or "error: <error message>"
-    matchedHint: str
+    matchedHints: list[str]
     url: str
     fields: dict[str, str | None]
     files: dict[str, ScrapedFile]

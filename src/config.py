@@ -2,11 +2,10 @@
 
 import os
 import json
-import re
 import typing as t
 import pathlib as pl
 
-from src.type_hints import Config, ConfigEntry, FileConfigEntry
+from src.type_hints import Config, WebsiteEntry
 
 
 # config file in the root of the project
@@ -41,91 +40,125 @@ def ReadJsonFromFile() -> dict:
 # ==========================
 
 
-def ReadConfig(website: t.Optional[str] = None, type: t.Optional[str] = None) -> Config:
-    """Read the configuration file, filtering by website and type, if specified."""
+def ReadConfig(website: str = "") -> Config:
+    """Read the configuration file, filtering by website, if specified."""
 
     # reads config
     config = ReadJsonFromFile()
 
     # includes only the specified website, if present
-    if website is not None:
+    if website != "":
         config = {website: config[website]} if website in config else {}
-        
-    # if type is not specified, no further filtering is required
-    if type is None: return config
 
-    # includes only the specified type for every website, if present
-    return {
-        _website: {type: websiteConfig[type]}
-        for _website, websiteConfig in config.items()
-        if type in websiteConfig
-    }
+    # checks validity of config
+    for website, entry in config.items():
+        try:
+            CheckEntryValid(website, entry)
+
+        # if error, add to entry
+        except ValueError as e:
+            entry["error"] = str(e)
+
+    return config
 
 
-def WriteConfig(entry: ConfigEntry, website: str, type: str) -> bool:
+def WriteConfig(entry: WebsiteEntry, website: str) -> bool:
     """Overwrite an entry in the configuration file."""
 
+    # checks validity of entry
+    CheckEntryValid(website, entry)
+
+    # writes entry to config
     config = ReadJsonFromFile()
-    config[website][type] = entry
+    config[website] = entry
     WriteJsonToFile(config)
     return True
 
 
 
-# CONFIG ENTRY MATCHING AND FILLING
-# ================================
+# CONFIG VALIDATION
+# =================
 
 
-def MatchPatterns(manuCode: str, config: Config) -> t.Tuple[str, str]:
-    """Matches a manuCode to a pattern in the config.
-    Returns the first matching website and type."""
+def CheckObjectStructure(obj: t.Any, required: dict[str, type], name: str) -> None:
+    """Checks if an object has the required structure.
+    Raises an error for invalid keys or types.
+    """
 
-    # for every website and type
-    for website, websiteConfig in config.items():
-        for type, typeConfig in websiteConfig.items():
+    # processed keys are removed from this list, so that unknown keys will remain
+    entryKeys = list(obj.keys())
 
-            # check if the manuCode matches any pattern
-            for pattern in typeConfig["patterns"]:
-                if re.match(pattern, manuCode):
-                    return website, type
+    # checks required keys
+    for key, type in required.items():
 
-    # if no match, return empty strings
-    return "", ""
+        # checks if the key is present
+        if key not in obj:
+            raise ValueError(f"Invalid {name}: key '{key}' is required, but not present")
+
+        # checks if the value is of the correct type
+        if not isinstance(obj[key], type):
+            raise ValueError(f"Invalid value '{obj[key]}' for key '{key}' of {name}: "
+                f"must be of type '{type.__name__}', not {type(obj[key]).__name__}")
+
+        # removes checked key from the list
+        entryKeys.remove(key)
+
+    # checks remaining keys, which are unknown
+    if entryKeys:
+        raise ValueError(f"Invalid config: unknown keys {entryKeys} of {name}")
 
 
-def FillMissingConfig(entry: ConfigEntry,
-    data: t.Optional[dict], files: t.Optional[dict],
-) -> t.Tuple[dict[str, str], dict[str, FileConfigEntry]]:
-    """Fills missing config for data and files parameters. Returns filled data and files."""
+def CheckEntryValid(website: str, entry: WebsiteEntry) -> None:
+    """Checks if a configuration entry for a website is valid.
+    Raises an error for invalid keys or types.
+    """
 
-    # fills missing parameters from config
-    if data is None:
-        data = entry.get("fields", {})
-    if files is None:
-        files = entry.get("files", {})
+    # checks structure of entry
+    required = {
+        "keywords": list,
+        "url": str,
+        "wait": str,
+        "notFound": str,
+        "fields": dict,
+        "files": dict,
+    }
+    CheckObjectStructure(entry, required, f"website '{website}'")
 
-    # fills missing values in entries of "data" parameter
-    # example: data = {"field1": None, ...} -> data = {"field1": "selector1", ...}
-    for field, selector in data.items():
-        if selector is None:
-            data[field] = entry.get("fields", {}).get(field, None)
+    # checks keywords are strings
+    for keyword in entry["keywords"]:
+        if not isinstance(keyword, str):
+            raise ValueError(f"Invalid keyword '{keyword}' (type: {type(keyword).__name__}) "
+                f"for website '{website}': must be string")
 
-    # fills missing config for entries of "files" parameter
-    # example: files = {"file1": None, ...} -> files = {"file1": { <data> }, ...}
-    for file, fileConfig in files.items():
+    # check structure of fields
+    for field, selector in entry["fields"].items():
 
-        # gets file entry from config
-        filesEntry = entry.get("files", {}).get(file, {})
+        if not isinstance(field, str):
+            raise ValueError(f"Invalid field name '{field}' (type: {type(field).__name__}) "
+                f"for website '{website}': must be string")
+        
+        if not isinstance(selector, str):
+            raise ValueError(f"Invalid selector '{selector}' (type: {type(selector).__name__}) "
+                f"for website '{website}': selectors must be strings")
 
-        # if file entry is None, use the one from config
-        if fileConfig is None:
-            files[file] = filesEntry
-            continue
+    # check structure of files
+    for file, fileConfig in entry["files"].items():
 
-        # fills missing values in entries of file config
-        # example: fileConfig = {"selector": None, ...} -> fileConfig = {"selector": "selector1", ...}
-        for key, value in fileConfig.items():
-            if value is None:
-                fileConfig[key] = filesEntry.get(key, None)
+        if "path" not in fileConfig:
+            raise ValueError(f"File '{file}' of website '{website}' must have 'path' field")
 
-    return data, files
+        hasSelector = "selector" in fileConfig
+        hasUrl = "url" in fileConfig
+            
+        # check that either 'selector' or 'url' is present (but not both)
+        if not (hasSelector or hasUrl) or (hasSelector and hasUrl):
+            raise ValueError(f"File '{file}' of website '{website}' must have either 'selector' "
+                "or 'url' field, but not both")
+            
+        # check types
+        if hasSelector and not isinstance(fileConfig["selector"], str):
+            raise ValueError(f"Invalid selector for file '{file}' of website '{website}': must be string")
+        if hasUrl and not isinstance(fileConfig["url"], str):
+            raise ValueError(f"Invalid url for file '{file}' of website '{website}': must be string")
+        if not isinstance(fileConfig["path"], str):
+            raise ValueError(f"Invalid path for file '{file}' of website '{website}': must be string")

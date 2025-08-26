@@ -19,7 +19,7 @@ def ReadDocs():
 
 mcp = FastMCP(
     name="Electric Components Scraper",
-    dependencies=["fastmcp", "selenium", "requests", "html2text"],
+    dependencies=["fastmcp", "selenium", "requests", "html2text", "ddgs"],
 )
 
 # MCP tools

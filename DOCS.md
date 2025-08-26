@@ -21,12 +21,21 @@ When using the scrape tool to get data from a single component, the library foll
 Below a more detailed description of some of the steps.
 
 
-### Website selection
+### Website ranking and selection
 
 The scraper chooses candidate websites in either of two ways:
 - a. matching the provided **hints** to known websites or configured keywords
 - b. using **web search** results, filtering only known websites
 
+In option a, hints are matched against websites and keywords, to get a score:
+- +5 if a hint exactly matches the website domain (e.g., `te.com`)
+- +3 for each hint that exactly matches a configured keyword
+Candidates are sorted by score, then used in order, until scraping succeeds.
+
+You can specify the same hints multiple times, to increase the score.
+Example: `["keyword1", "keyword1", "keyword2"]` gives x2 score to `keyword1` than `keyword2`.
+
+The web search (option b) is performed if no hints matches any website (or no hints provided).
 See the next sections for more details and examples about hints and keywords.
 
 
@@ -36,7 +45,7 @@ The scraper can be configured to compose the url in either of two ways:
 - I. substituting the manifacturer code in a **url template**
 - II. matching urls from search results to a **url pattern** (with * wildcard)
 
-For websites with **static urls**, except the manifacturer code,
+For websites with **static urls** (always the same url, except the manifacturer code),
 the scraper composes the url by substituting the manifacturer code in the url template.
 
 Example:
@@ -47,7 +56,7 @@ Composed URL: "https://example.com/part-1234567890"
 ```
 
 For websites with **dynamic urls**, including in the url other dynamic information,
-different from manifacturer code, the scraper gets the url by matching the pattern
+besides manifacturer code, the scraper gets the url by matching the pattern
 with the web search results.
 
 Example:
@@ -80,6 +89,7 @@ to search and scrape data from a single component.
 The scraping function returns a list of dictionaries, with the following fields:
 - `manuCode`: manifacturer code of the component
 - `result`: "success" or "error: <error message>"
+- `matchedHints`: list of hints that matched (domain first, then keywords)
 - `url`: url of the scraped website page
 - `fields`: dictionary with the scraped data (e.g. basic info, details)
 - `files`: dictionary with the files downloaded (e.g. datasheet, drawings, catalogs)
@@ -97,7 +107,7 @@ Example output:
   {
     "manuCode": "1234567890",
     "result": "success",
-    "matchedHint": "example.com",
+    "matchedHints": ["example.com", "connector"],
     "url": "https://example.com/part-1234567890",
     "fields": {
       "description": "Connector description",
@@ -106,19 +116,19 @@ Example output:
     },
     "files": {
       "datasheet": {
-        "url": "https://example.com/datasheet.pdf",
+        "url": "https://example.com/datasheet_1234567890.pdf",
         "path": "/path/to/datasheet-1234567890-black.pdf",
         "size": 1000000
       },
       "drawing": {
-        "url": "https://example.com/drawing.pdf",
+        "url": "https://example.com/drawing_1234567890.pdf",
         "path": "/path/to/drawing-1234567890-black.pdf",
         "size": 2000000
       },
       "image": {
         // this file was not found
         "result": "error: 404 Not Found",
-        "url": "https://example.com/image.jpg",
+        "url": "https://example.com/image_1234567890.jpg",
       }
     },
   },
@@ -138,8 +148,8 @@ The function takes the following arguments:
 - `manuCodes`: list of manifacturer codes of the components (required)
 - `hints`: websites or keywords to match the website to scrape from
 - `files`: list of file tags to scrape (None = all configured files)
-- `basePath`: base path to save the files
-- `format`: "html", "md", "txt" (default = md)
+- `basePath`: base path to save the files to download
+- `format`: "html", "md", "txt" (default = txt)
 - `closeBrowser`: whether to close the browser after scraping (default = True)
 
 The only required argument is `manuCodes`.
@@ -150,7 +160,7 @@ Example input:
   "manuCodes": ["1234567890", "1234567891"],
   "hints": ["te.com", "AMP", "connector"],
   "files": ["datasheet", "drawing", "image"],
-  "basePath": "/path/to/download/folder/",
+  "basePath": "/absolute/path/to/download/folder/",
   "format": "md",
   "closeBrowser": true,
 }
@@ -208,12 +218,12 @@ The configuration file is a json file, with the following structure:
 
 The `url` field must contain the {manuCode} placeholder to be substituted with the manifacturer code.
 If the url contains * wildcard, it will be used to match the url from search results.
-Otherwise, the url will be used as is.
+Otherwise, the url will be used as is, simply substituting the manifacturer code.
 
 The `filename` field of the file configuration supports placeholders:
 - `{manuCode}`: manifacturer code
 - `{ext}`: extension of the file
-- scraped data fields, from `fields` output dictionary, e.g. `{description}`
+- scraped data fields, from `fields` output dictionary, e.g. `{description}` for field `description`
 
 
 ## Other tools
