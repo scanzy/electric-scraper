@@ -87,18 +87,16 @@ def GetRankedCandidates(hints: list[str], config: Config) -> list[CandidateWebsi
 def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[CandidateWebsite]:
     """Gets candidate websites for a component, searching online."""
 
-    # composes the search query
-    query = manuCode
+    # composes the search query: exact match for manuCode, then hints
+    query = f'"{manuCode}"'
     if hints: query += " " + " ".join(hints)
 
     # searches the web, composing candidates
     candidates = []
     for result in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
 
-        # extracts website from url, removing protocol and www  
-        # https://www.molex.com/... -> molex.com
-        website = result["href"].split("/")[2]
-        website = website.replace("www.", "")
+        # extracts website from url 
+        website = WebsiteFromUrl(result["href"])
 
         # adds candidate, if not already in list
         if website not in candidates:
@@ -134,6 +132,13 @@ def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
 def MatchPatternToWebResults(url: str, manuCode: str, hints: list[str]) -> str:
     """Searches the web for the first url matching the pattern."""
 
+    # composes the search query: exact match for manuCode, then hints
+    query = f'"{manuCode}"'
+    if hints: query += " " + " ".join(hints)
+
+    # only on the specified website
+    query += " " + "site:" + WebsiteFromUrl(url)
+
     # escapes special characters in the pattern
     pattern = url.replace("{manuCode}", manuCode)
     for char in [".", "[", "]", "(", ")", "+", "?", "^", "$"]:
@@ -141,11 +146,6 @@ def MatchPatternToWebResults(url: str, manuCode: str, hints: list[str]) -> str:
 
     # replaces * with .* and evaluates as regex
     regex = re.compile(pattern.replace("*", ".*"))
-
-    # composes the search query (only on the specified website)
-    query = manuCode + (
-        "" if len(hints) == 0 else (" " + " ".join(hints))
-    ) + " " + "site:" + WebsiteFromUrl(url)
 
     # searches on the web, getting the first url matching the regex
     for searchResult in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
