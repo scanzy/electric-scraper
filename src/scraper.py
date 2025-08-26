@@ -1,5 +1,6 @@
 """Main scraper functions."""
 
+import re
 import typing as t
 import html2text as h2t
 import logging as log
@@ -31,6 +32,13 @@ class CandidateWebsite(t.NamedTuple):
     website: str
     score: int
     matchedHints: list[str]
+
+
+def WebsiteFromUrl(url: str) -> str:
+    """Extracts the website from a url.
+    Example: https://www.molex.com/molex/products/family/10362 -> molex.com
+    """
+    return url.split("/")[2].replace("www.", "")
 
 
 def MatchWebsiteToHints(lowerHints: list[str], lowerWebsite: str, entry: WebsiteEntry) -> CandidateWebsite:
@@ -122,6 +130,29 @@ def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
         pass
 
 
+def MatchPatternToWebResults(pattern: str, manuCode: str, hints: list[str]) -> str:
+    """Searches the web for the first url matching the pattern."""
+
+    # escapes special characters in the pattern
+    for char in [".", "[", "]", "(", ")", "+", "?", "^", "$"]:
+        pattern = pattern.replace(char, "\\" + char)
+
+    # replaces * with .* and evaluates as regex
+    regex = re.compile(pattern.replace("*", ".*").replace("{manuCode}", manuCode))
+
+    # composes the search query (only on the specified website)
+    query = manuCode + " site:" + WebsiteFromUrl(pattern)
+    if hints: query += " " + " ".join(hints)
+
+    # searches on the web, getting the first url matching the regex
+    for searchResult in DDGS().text(query, max_results=5):
+        if regex.match(searchResult["href"]):
+            return searchResult["href"]
+
+    # if no match, returns error
+    raise ComponentNotFoundError()
+
+
 def ScrapeFromWebsite(
     manuCode: str,  
     entry: WebsiteEntry,
@@ -138,12 +169,14 @@ def ScrapeFromWebsite(
 
     # detects if url is a pattern (contains *)
     if "*" in entry["url"]:
-        # TODO: implement URL pattern matching with wildcard (*) support
-        # Currently only supports simple template substitution {manuCode}
-        raise NotImplementedError("URL pattern matching with wildcard (*) is not implemented yet")
+        url = MatchPatternToWebResults(entry["url"], manuCode, matchedHints)
 
-    # formats url replacing {manuCode} with the provided manuCode
-    url = entry["url"].format(manuCode=manuCode)
+    # if the url is not a pattern, it is a template
+    else:
+        # formats url replacing {manuCode} with the provided manuCode
+        url = entry["url"].format(manuCode=manuCode)
+
+    # navigates to the found url
     logger.info(f"Navigating to URL: {url}")
     driver.get(url)
     

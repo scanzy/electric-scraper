@@ -76,11 +76,11 @@ TODO (high priority):
 - [x] add config validation
 - [x] implement retry on other websites if scraping fails
 - [x] add selector to recognize not found items
-- [ ] add websearch for url pattern matching
+- [x] add websearch for url pattern matching
 - [ ] add prompt to let AI analyze new sites and add them to config
 
 TODO (low priority):
-- [ ] add tests for MCP server
+- [o] add tests for MCP server
 - [ ] upload to PyPI
 - [ ] improve and activate pdf scraping
 - [ ] add support for images, not working yet
