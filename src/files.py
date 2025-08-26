@@ -2,10 +2,12 @@
 
 import os
 import time
+import json
+import requests
+
 import typing as t
 import logging as log
 from pathlib import Path
-import requests
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -17,6 +19,24 @@ from src.type_hints import FileConfigEntry, ScrapedFile
 DOWNLOAD_TIMEOUT = 10     # timeout for waiting for file to download
 DOWNLOAD_INTERVAL = 0.5   # interval for checking for new files
 DOWNLOAD_DELAY = 0.5      # delay for moving file to target path
+
+
+def SanitizeUrlForJS(url: str) -> str:
+    """Sanitizes URL to prevent JavaScript injection attacks.
+    Uses JSON encoding to properly escape special characters.
+    """
+    # JSON.stringify properly escapes quotes, backslashes, and other special chars
+    return json.dumps(url)
+
+
+# Methods to download files
+# 1. DownloadDirect: directly from url, using requests. Simple but no header or cookies.
+# 2. DownloadImage: using javascript injected in the page. To be tested.
+# 3. DownloadFile: using selenium to open a new tab with the file url.
+#    Works only if the browser is properly configured to download files automatically.
+#
+# TODO: use option 1 if it works, otherwise use option 2 for images and option 3 for other files.
+# TODO: add option in config to choose the desired method, since method 1 hangs on some websites.
 
 
 def GetFileUrl(driver: webdriver.Firefox,
@@ -95,14 +115,17 @@ def DownloadImage(driver: webdriver.Firefox, selector: str) -> None:
             var url = URL.createObjectURL(blob);
             
             // Creates a link for download
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'image.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'image.png';
+
+            // NOTE: is this needed?
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             
             // Cleans the URL
+            // NOTE: maybe this should be done after the download is completed?
             URL.revokeObjectURL(url);
         }, 'image/png');
     }
@@ -128,9 +151,10 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
         if file.endswith(".part"):
             log.warning(f"Part file found: {file}")
 
-    # opens a new tab with the file url
+    # opens a new tab with the file url (URL sanitized to prevent injection)
     # the tab will close after the file is downloaded
-    driver.execute_script(f"window.open('{url}', '_blank');")
+    sanitizedUrl = SanitizeUrlForJS(url)
+    driver.execute_script(f"window.open({sanitizedUrl}, '_blank');")
     driver.switch_to.window(driver.window_handles[-1])
     log.info(f"Opened new tab with url: {url}, waiting for file to download...")
 
