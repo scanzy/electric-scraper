@@ -52,7 +52,7 @@ def MatchWebsiteToHints(lowerHints: list[str], lowerWebsite: str, entry: Website
             if hint not in matchedHints:
                 matchedHints.append(hint)
 
-    logger.info(f"Matched website '{lowerWebsite}' to hints {matchedHints} with score {score}")
+    logger.debug(f"Matched website '{lowerWebsite}' to hints {matchedHints} with score {score}")
     return CandidateWebsite(lowerWebsite, score, matchedHints)
 
 
@@ -158,7 +158,7 @@ def ScrapeFromWebsite(
     RaiseOnNotFound(driver, notFoundSelector)
 
     # scrapes fields
-    logger.info("Scraping fields...")
+    logger.debug("Scraping fields...")
     scrapedFields = ScrapeFields(driver, entry["fields"], format)
     
     # gets files config, filtering by files parameter
@@ -167,7 +167,7 @@ def ScrapeFromWebsite(
         filesConfig = {key: value for key, value in filesConfig.items() if key in files}
 
     # scrapes files
-    logger.info("Scraping files...")
+    logger.debug("Scraping files...")
     scrapedFiles = ScrapeFiles(driver, basePath, filesConfig,
         data = {**scrapedFields, "manuCode": manuCode, "ext": "{ext}"})
 

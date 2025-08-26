@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # browser configuration
 SHOW_BROWSER = True
-BROWSER_TIMEOUT = 20
+BROWSER_TIMEOUT = 10
 
 # these MIME types will be downloaded
 DOWNLOAD_FILES = ",".join([
