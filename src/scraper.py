@@ -125,7 +125,7 @@ def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
     """Raises ComponentNotFoundError if the not-found selector is present in the page."""
     try: 
         driver.find_element(By.CSS_SELECTOR, notFoundSelector)
-        raise ComponentNotFoundError()
+        raise ComponentNotFoundError("Detected not-found selector in page")
     except NoSuchElementException:
         pass
 
@@ -150,7 +150,7 @@ def MatchPatternToWebResults(pattern: str, manuCode: str, hints: list[str]) -> s
             return searchResult["href"]
 
     # if no match, returns error
-    raise ComponentNotFoundError()
+    raise ComponentNotFoundError("No matching result found in web search")
 
 
 def ScrapeFromWebsite(
@@ -290,6 +290,9 @@ def ScrapeComponent(
             "result": f"error: no known website found for '{manuCode}'",
         }
 
+    # saves errors for each candidate website
+    attempts: dict[str, str] = {} # website -> error message
+
     # for each candidate website
     for candidate in candidates:
         try:
@@ -301,18 +304,20 @@ def ScrapeComponent(
         # skip to next candidate if component not found
         except ComponentNotFoundError as e:
             logger.info(f"Component '{manuCode}' not found on '{candidate.website}'")
+            attempts[candidate.website] = str(e)
             continue
             
         # returns error if something goes wrong
         except Exception as e:
             logger.error(f"Error during scraping '{manuCode}' from '{candidate.website}': {e}")
+            attempts[candidate.website] = str(e)
             continue
 
     # if all fails, return error
     return {
         "manuCode": manuCode,
-        "result": f"error: unable to scrape '{manuCode}' from any known website. "
-            "Tried websites: " + ", ".join(candidate.website for candidate in candidates),
+        "result": f"error: unable to scrape '{manuCode}' from any known website. " +
+            " | ".join(f"{website}: {error}" for website, error in attempts.items()),
     }
 
 
