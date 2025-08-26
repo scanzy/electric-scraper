@@ -93,7 +93,7 @@ def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[Candidat
 
     # searches the web, composing candidates
     candidates = []
-    for result in DDGS().text(query, max_results=5, backend=SEARCH_BACKEND):
+    for result in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
 
         # extracts website from url, removing protocol and www  
         # https://www.molex.com/... -> molex.com
@@ -131,28 +131,28 @@ def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
         pass
 
 
-def MatchPatternToWebResults(pattern: str, manuCode: str, hints: list[str]) -> str:
+def MatchPatternToWebResults(url: str, manuCode: str, hints: list[str]) -> str:
     """Searches the web for the first url matching the pattern."""
 
     # escapes special characters in the pattern
+    pattern = url.replace("{manuCode}", manuCode)
     for char in [".", "[", "]", "(", ")", "+", "?", "^", "$"]:
         pattern = pattern.replace(char, "\\" + char)
 
     # replaces * with .* and evaluates as regex
-    regex = re.compile(pattern.replace("*", ".*").replace("{manuCode}", manuCode))
+    regex = re.compile(pattern.replace("*", ".*"))
 
     # composes the search query (only on the specified website)
     query = manuCode + (
         "" if len(hints) == 0 else (" " + " ".join(hints))
-    ) + " " + "site:" + WebsiteFromUrl(pattern)
+    ) + " " + "site:" + WebsiteFromUrl(url)
 
     # searches on the web, getting the first url matching the regex
-    for searchResult in DDGS().text(query, max_results=5, backend=SEARCH_BACKEND):
+    for searchResult in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
         if regex.match(searchResult["href"]):
             return searchResult["href"]
 
-    # if no match, returns error
-    raise ComponentNotFoundError("No matching result found in web search")
+    return ""
 
 
 def ScrapeFromWebsite(
@@ -166,17 +166,19 @@ def ScrapeFromWebsite(
 ) -> ScrapedComponentData:
     """Scrapes data of a component from a website."""
 
-    # opens browser, or gets existing one
-    driver = GetBrowser()
-
     # detects if url is a pattern (contains *)
     if "*" in entry["url"]:
         url = MatchPatternToWebResults(entry["url"], manuCode, matchedHints)
+        if url == "":
+            raise ComponentNotFoundError("Unable to match url pattern to web search results")
 
     # if the url is not a pattern, it is a template
     else:
         # formats url replacing {manuCode} with the provided manuCode
         url = entry["url"].format(manuCode=manuCode)
+
+    # opens browser, or gets existing one
+    driver = GetBrowser()
 
     # navigates to the found url
     logger.info(f"Navigating to URL: {url}")
@@ -289,7 +291,8 @@ def ScrapeComponent(
     if len(candidates) == 0:
         return {
             "manuCode": manuCode,
-            "result": f"error: no known website found for '{manuCode}'",
+            "result": f"error: no known website found for '{manuCode}'. " + 
+                "Try using different hints, or add a new website to the config file.",
         }
 
     # saves errors for each candidate website
@@ -297,29 +300,37 @@ def ScrapeComponent(
 
     # for each candidate website
     for candidate in candidates:
+
+        # only for known websites (in config file)
         try:
-            # try to scrape from each one
             websiteEntry = config[candidate.website]
+        except KeyError:
+            logger.warning(f"Unknown candidate Website '{candidate.website}', skipping...")
+            attempts[candidate.website] = "Unknown candidate website"
+            continue
+    
+        # try to scrape from each one
+        try:
             return ScrapeFromWebsite(manuCode, websiteEntry, files, basePath,
                 candidate.matchedHints, format, closeBrowser)
 
         # skip to next candidate if component not found
         except ComponentNotFoundError as e:
             logger.info(f"Component '{manuCode}' not found on '{candidate.website}'")
-            attempts[candidate.website] = str(e)
+            attempts[candidate.website] = type(e).__name__ + ": " + str(e)
             continue
             
         # returns error if something goes wrong
         except Exception as e:
             logger.error(f"Error during scraping '{manuCode}' from '{candidate.website}': {e}")
-            attempts[candidate.website] = str(e)
+            attempts[candidate.website] = type(e).__name__ + ": " + str(e)
             continue
 
     # if all fails, return error
     return {
         "manuCode": manuCode,
         "result": f"error: unable to scrape '{manuCode}' from any known website. " +
-            " | ".join(f"{website}: {error}" for website, error in attempts.items()),
+            " | ".join(f"[{website}]: {error}" for website, error in attempts.items()),
     }
 
 
