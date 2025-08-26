@@ -5,7 +5,7 @@ description = "Tools to scrape electrical component data from online sources (wi
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "ddgs>=9.4.3",
+    "ddgs>=9.5.4",
     "fastmcp>=2.10.5",
     "html2text>=2025.4.15",
     "requests>=2.32.4",
