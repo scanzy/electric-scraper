@@ -1,115 +1,22 @@
 """Main scraper functions."""
 
-import re
+import logging as log
 import typing as t
 import html2text as h2t
-import logging as log
 
-from ddgs import DDGS
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 
-from src.type_hints import ScrapedComponentData, Config, WebsiteEntry
-from src.browser import GetBrowser, WaitElement, CloseBrowser, RetryOnException, ResetBrowser
 from src.config import ReadConfig
+from src.browser import GetBrowser, WaitElement, CloseBrowser, RetryOnException, ResetBrowser
 from src.files import ScrapeFiles
+from src.website import MatchUrlPatternToWebResults, GetCandidatesFromHints, GetCandidatesFromWebSearch, MatchUrlToDomains
+from src.type_hints import ScrapedComponentData, WebsiteEntry
 
 
-# configures logging
-log.basicConfig(level=log.INFO, format='%(asctime)s - %(message)s')
 logger = log.getLogger(__name__)
-
-
-SEARCH_BACKEND = "duckduckgo, bing, brave, google"
-
-
-# CANDIDATE WEBSITES MATCHING
-# ===========================
-
-
-class CandidateWebsite(t.NamedTuple):
-    """Candidate website for scraping, with score and matched hints."""
-    website: str
-    score: int
-    matchedHints: list[str]
-
-
-def WebsiteFromUrl(url: str) -> str:
-    """Extracts the website from a url.
-    Example: https://www.molex.com/molex/products/family/10362 -> molex.com
-    """
-    return url.split("/")[2].replace("www.", "")
-
-
-def MatchWebsiteToHints(lowerHints: list[str], lowerWebsite: str, entry: WebsiteEntry) -> CandidateWebsite:
-    """Matches the hints against the website, calculating the score."""
-
-    score = 0
-    matchedHints = []
-    for hint in lowerHints:
-
-        # +5 if hint exactly matches the website domain
-        if hint == lowerWebsite:
-            score += 5
-            if hint not in matchedHints:
-                matchedHints.append(hint)
-
-        # +3 for each hint that exactly matches a configured keyword
-        if hint in entry["keywords"]:
-            score += 3
-            if hint not in matchedHints:
-                matchedHints.append(hint)
-
-    logger.debug(f"Matched website '{lowerWebsite}' to hints {matchedHints} with score {score}")
-    return CandidateWebsite(lowerWebsite, score, matchedHints)
-
-
-def GetRankedCandidates(hints: list[str], config: Config) -> list[CandidateWebsite]:
-    """Matches the provided hints against the configured websites, sorting them by score."""
-
-    # preprocess hints: lowercase
-    # NOTE: we do not remove duplicate hints, to count them multiple times in score
-    # the user can specify some hints multiple times to give them more score
-    lowerHints = [hint.lower() for hint in hints]
-
-    # matches hints against websites
-    candidates = [MatchWebsiteToHints(lowerHints, website, entry)
-        for website, entry in config.items()]
-
-    # removes websites with no matched hints (0 score)
-    candidates = [candidate for candidate in candidates if candidate.score > 0]
-
-    # sorts websites by score
-    return sorted(candidates, key=lambda x: x.score, reverse=True)
-
-
-def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[CandidateWebsite]:
-    """Gets candidate websites for a component, searching online."""
-
-    # composes the search query: exact match for manuCode, then hints
-    query = f'"{manuCode}"'
-    if hints: query += " " + " ".join(hints)
-
-    # searches the web, composing candidates
-    candidates = []
-    for result in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
-
-        # extracts website from url 
-        website = WebsiteFromUrl(result["href"])
-
-        # adds candidate, if not already in list
-        if website not in candidates:
-            candidates.append(website)
-
-    # logs candidates
-    logger.info(f"Found {len(candidates)} candidates from web search: "
-        + ", ".join(candidates))
-
-    # returns candidates, with score from N to 1
-    return [CandidateWebsite(website, len(candidates) - index, [])
-        for index, website in enumerate(candidates)]
-
+logger.setLevel(log.INFO)
 
 
 # SCRAPING FROM WEBSITE
@@ -129,32 +36,6 @@ def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
         pass
 
 
-def MatchPatternToWebResults(url: str, manuCode: str, hints: list[str]) -> str:
-    """Searches the web for the first url matching the pattern."""
-
-    # composes the search query: exact match for manuCode, then hints
-    query = f'"{manuCode}"'
-    if hints: query += " " + " ".join(hints)
-
-    # only on the specified website
-    query += " " + "site:" + WebsiteFromUrl(url)
-
-    # escapes special characters in the pattern
-    pattern = url.replace("{manuCode}", manuCode)
-    for char in [".", "[", "]", "(", ")", "+", "?", "^", "$"]:
-        pattern = pattern.replace(char, "\\" + char)
-
-    # replaces * with .* and evaluates as regex
-    regex = re.compile(pattern.replace("*", ".*"))
-
-    # searches on the web, getting the first url matching the regex
-    for searchResult in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
-        if regex.match(searchResult["href"]):
-            return searchResult["href"]
-
-    return ""
-
-
 @RetryOnException(on=InvalidSessionIdException, init=ResetBrowser)
 def ScrapeFromWebsite(
     manuCode: str,  
@@ -169,7 +50,7 @@ def ScrapeFromWebsite(
 
     # detects if url is a pattern (contains *)
     if "*" in entry["url"]:
-        url = MatchPatternToWebResults(entry["url"], manuCode, matchedHints)
+        url = MatchUrlPatternToWebResults(entry["url"], manuCode, matchedHints)
         if url == "":
             raise ComponentNotFoundError("Unable to match url pattern to web search results")
 
@@ -281,7 +162,7 @@ def ScrapeComponent(
     config = ReadConfig()
 
     # matches websites against hints, and sorts them by score
-    candidates = GetRankedCandidates(hints, config)
+    candidates = GetCandidatesFromHints(hints, config)
 
     # if fails, try web search
     if len(candidates) == 0:
@@ -304,10 +185,11 @@ def ScrapeComponent(
 
         # only for known websites (in config file)
         try:
-            websiteEntry = config[candidate.website]
-        except KeyError:
-            logger.warning(f"Unknown candidate Website '{candidate.website}', skipping...")
-            attempts[candidate.website] = "Unknown candidate website"
+            domain = MatchUrlToDomains(candidate.domain, list(config.keys()))
+            websiteEntry = config[domain]
+        except ValueError:
+            logger.warning(f"Unknown candidate website '{candidate.domain}', skipping...")
+            attempts[candidate.domain] = "Unknown candidate website"
             continue
     
         # try to scrape from each one
@@ -317,21 +199,25 @@ def ScrapeComponent(
 
         # skip to next candidate if component not found
         except ComponentNotFoundError as e:
-            logger.info(f"Component '{manuCode}' not found on '{candidate.website}'")
-            attempts[candidate.website] = type(e).__name__ + ": " + str(e)
+            logger.info(f"Component '{manuCode}' not found on '{candidate.domain}'")
+            attempts[candidate.domain] = type(e).__name__ + ": " + str(e)
             continue
             
         # returns error if something goes wrong
         except Exception as e:
-            logger.error(f"Error during scraping '{manuCode}' from '{candidate.website}': {e}")
-            attempts[candidate.website] = type(e).__name__ + ": " + str(e)
+            logger.error(f"Error during scraping '{manuCode}' from '{candidate.domain}': {e}")
+            attempts[candidate.domain] = type(e).__name__ + ": " + str(e)
             continue
 
+    # closes browser, if configured
+    if closeBrowser:
+        CloseBrowser()
+    
     # if all fails, return error
     return {
         "manuCode": manuCode,
         "result": f"error: unable to scrape '{manuCode}' from any known website. " +
-            " | ".join(f"[{website}]: {error}" for website, error in attempts.items()),
+            " | ".join(f"[{domain}]: {error}" for domain, error in attempts.items()),
     }
 
 

@@ -3,13 +3,18 @@
 import os
 import json
 import typing as t
+import logging as log
 import pathlib as pl
 
+from src.website import MatchUrlToDomains, DomainFromUrl
 from src.type_hints import Config, WebsiteEntry
 
 
 # config file in the root of the project
 CONFIG_FILE = pl.Path(__file__).parent.parent / "electric-scraper-config.json"
+
+# configures logging
+log.basicConfig(format="%(name)s: %(message)s")
 
 
 # JSON FILE OPERATIONS
@@ -40,20 +45,23 @@ def ReadJsonFromFile() -> dict:
 # ==========================
 
 
-def ReadConfig(website: str = "") -> Config:
+def ReadConfig(domainOrUrl: str = "") -> Config:
     """Read the configuration file, filtering by website domain, if specified."""
 
     # reads config
     config = ReadJsonFromFile()
 
     # includes only the specified website, if present
-    if website != "":
-        config = {website: config[website]} if website in config else {}
+    try:
+        domain = MatchUrlToDomains(domainOrUrl, list(config.keys()))
+        config = {domain: config[domain]}
+    except ValueError:
+        pass
 
     # checks validity of config
-    for website, entry in config.items():
+    for domain, entry in config.items():
         try:
-            CheckEntryValid(website, entry)
+            CheckEntryValid(domain, entry)
 
         # if error, add to entry
         except ValueError as e:
@@ -62,17 +70,21 @@ def ReadConfig(website: str = "") -> Config:
     return config
 
 
-def WriteConfig(entry: WebsiteEntry, website: str) -> bool:
-    """Overwrite an entry in the configuration file.
-    As website, use the domain of the website, not the full URL.
+def WriteConfig(entry: WebsiteEntry, domain: str) -> bool:
+    """Writes (or overwrites) an entry in the configuration file.
+    Specify the domain of the website excluding subdomains and www.
+    For example, use "farnell.com" instead of "it.farnell.com".
     """
 
+    # extracts domain from URL
+    domain = DomainFromUrl(domain)
+
     # checks validity of entry
-    CheckEntryValid(website, entry)
+    CheckEntryValid(domain, entry)
 
     # writes entry to config
     config = ReadJsonFromFile()
-    config[website] = entry
+    config[domain] = entry
     WriteJsonToFile(config)
     return True
 
@@ -110,7 +122,7 @@ def CheckObjectStructure(obj: t.Any, required: dict[str, type], name: str) -> No
         raise ValueError(f"Invalid config: unknown keys {entryKeys} of {name}")
 
 
-def CheckEntryValid(website: str, entry: WebsiteEntry) -> None:
+def CheckEntryValid(domain: str, entry: WebsiteEntry) -> None:
     """Checks if a configuration entry for a website is valid.
     Raises an error for invalid keys or types.
     """
@@ -124,43 +136,43 @@ def CheckEntryValid(website: str, entry: WebsiteEntry) -> None:
         "fields": dict,
         "files": dict,
     }
-    CheckObjectStructure(entry, required, f"website '{website}'")
+    CheckObjectStructure(entry, required, f"website '{domain}'")
 
     # checks keywords are strings
     for keyword in entry["keywords"]:
         if not isinstance(keyword, str):
             raise ValueError(f"Invalid keyword '{keyword}' (type: {type(keyword).__name__}) "
-                f"for website '{website}': must be string")
+                f"for website '{domain}': must be string")
 
     # check structure of fields
     for field, selector in entry["fields"].items():
 
         if not isinstance(field, str):
             raise ValueError(f"Invalid field name '{field}' (type: {type(field).__name__}) "
-                f"for website '{website}': must be string")
+                f"for website '{domain}': must be string")
         
         if not isinstance(selector, str):
             raise ValueError(f"Invalid selector '{selector}' (type: {type(selector).__name__}) "
-                f"for website '{website}': selectors must be strings")
+                f"for website '{domain}': selectors must be strings")
 
     # check structure of files
     for file, fileConfig in entry["files"].items():
 
         if "path" not in fileConfig:
-            raise ValueError(f"File '{file}' of website '{website}' must have 'path' field")
+            raise ValueError(f"File '{file}' of website '{domain}' must have 'path' field")
 
         hasSelector = "selector" in fileConfig
         hasUrl = "url" in fileConfig
             
         # check that either 'selector' or 'url' is present (but not both)
         if not (hasSelector or hasUrl) or (hasSelector and hasUrl):
-            raise ValueError(f"File '{file}' of website '{website}' must have either 'selector' "
+            raise ValueError(f"File '{file}' of website '{domain}' must have either 'selector' "
                 "or 'url' field, but not both")
             
         # check types
         if hasSelector and not isinstance(fileConfig["selector"], str):
-            raise ValueError(f"Invalid selector for file '{file}' of website '{website}': must be string")
+            raise ValueError(f"Invalid selector for file '{file}' of website '{domain}': must be string")
         if hasUrl and not isinstance(fileConfig["url"], str):
-            raise ValueError(f"Invalid url for file '{file}' of website '{website}': must be string")
+            raise ValueError(f"Invalid url for file '{file}' of website '{domain}': must be string")
         if not isinstance(fileConfig["path"], str):
-            raise ValueError(f"Invalid path for file '{file}' of website '{website}': must be string")
+            raise ValueError(f"Invalid path for file '{file}' of website '{domain}': must be string")

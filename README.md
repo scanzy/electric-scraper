@@ -72,9 +72,11 @@ See [DOCS.md](DOCS.md) for details about usage and configuration.
   - [`src/scraper.py`](/src/scraper.py): main scraper functions
   - [`src/files.py`](/src/files.py): file scraping functions (downloading)
   - [`src/config.py`](/src/config.py): configuration file operations (read, write, validate)
+  - [`src/website.py`](/src/website.py): website utilities (hints, web search)
   - [`src/browser.py`](/src/browser.py): browser utilities (opening, closing, retrying)
   - [`src/type_hints.py`](/src/type_hints.py): type hints for config and scraped data
 
+- [`tests/`](/tests/): tests to check functionality works properly
 - [`scouting/`](/scouting/): preliminary code, used to investigate functionality
 - [`server.py`](/server.py): MCP server, exposing tools to AI
 - [`DOCS.md`](/DOCS.md): detailed instructions, for humans and AI
@@ -91,10 +93,14 @@ TODO (high priority):
 - [x] implement retry on other websites if scraping fails
 - [x] add selector to recognize not found items
 - [x] add websearch for url pattern matching
+- [x] add support for subdomain matching, to support .co.jp domains
 - [ ] add prompt to let AI analyze new sites and add them to config
 
 TODO (low priority):
 - [o] add tests for MCP server
+- [ ] use optional fields in config: keywords, notFound, fields, files
+- [ ] use jsonschema library for config validation
+- [ ] add tests for config functions, using monkeypatching
 - [ ] upload to PyPI
 - [ ] improve and activate pdf scraping
 - [ ] add support for images, not working yet

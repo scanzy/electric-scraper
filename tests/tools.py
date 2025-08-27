@@ -1,9 +1,15 @@
 """Tests for the scraper."""
 
+import sys
 import json
 import typing as t
+import pathlib as pl
+
+# adds the parent directory to the path
+# this allows to run tests with the IDE play button
+sys.path.append(str(pl.Path(__file__).parent.parent))
 from src.config import ReadConfig, WriteConfig
-from src.scraper import ScrapeComponents, ScrapeComponent, GetRankedCandidates
+from src.scraper import ScrapeComponents, ScrapeComponent, GetCandidatesFromHints
 
 
 def PretryPrintDict(data: t.Mapping) -> None:
@@ -25,11 +31,11 @@ def TestConfigReadWrite():
         return
 
     # reads missing type and/or website
-    assert len(ReadConfig(website="missing")) == 0
+    assert len(ReadConfig(domainOrUrl="missing")) == 0
 
     # reads only the first website
     firstWebsite = list(allConfig.keys())[0]
-    config = ReadConfig(website=firstWebsite)
+    config = ReadConfig(domainOrUrl=firstWebsite)
     print(f"Config for {firstWebsite}:")
     PretryPrintDict(config)
 
@@ -39,7 +45,7 @@ def TestConfigReadWrite():
         return
 
     # writes config
-    WriteConfig(config[firstWebsite], website=firstWebsite)
+    WriteConfig(config[firstWebsite], domain=firstWebsite)
     print(f"Config for {firstWebsite} written to file.")
 
 
@@ -57,9 +63,9 @@ def TestMatching():
     config = ReadConfig()
     for testName, keywords in hints.items():
         print(f"Matching test '{testName}' with hints {keywords}:")
-        candidates = GetRankedCandidates(keywords, config)
+        candidates = GetCandidatesFromHints(keywords, config)
         for candidate in candidates:
-            print(f"- [{candidate.score}] {candidate.website}: {candidate.matchedHints}")
+            print(f"- [{candidate.score}] {candidate.domain}: {candidate.matchedHints}")
 
 
 def TestScraper():
@@ -81,7 +87,9 @@ def TestNotFound():
 
 
 if __name__ == "__main__":
-    #print(ReadConfig())
+    pass
+
+    #PretryPrintDict(ReadConfig())
     #TestConfigReadWrite()
     #TestMatching()
     #TestScraper()

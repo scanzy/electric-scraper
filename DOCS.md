@@ -146,7 +146,7 @@ Example output:
 
 The function takes the following arguments:
 - `manuCodes`: list of manifacturer codes of the components (required)
-- `hints`: websites or keywords to match the website to scrape from
+- `hints`: website domains or keywords to match the website to scrape from
 - `files`: list of file tags to scrape (None = all configured files)
 - `basePath`: base path to save the files to download
 - `format`: "html", "md", "txt" (default = txt)
@@ -232,11 +232,11 @@ The configuration file can be read and edited using `ReadConfig` and `WriteConfi
 or MCP tools `read_config` and `write_config`.
 
 ReadConfig returns the dictionary stored in the configuration file.
-When specifying optional parameter `website`, the dictionary is filtered.
-Example: `ReadConfig(website="example.com")`
+When specifying optional parameter `domainOrUrl`, the dictionary is filtered.
+Example: `ReadConfig(domainOrUrl="example.com")`
 
 WriteConfig takes a dictionary as input, and writes it to the configuration file.
-Example: `WriteConfig(config, website="example.com")`
+Example: `WriteConfig(config, domain="example.com")`
 
 This documentation file can be read using `ReadDocs` function (MCP tool `read_docs`),
 which returns the text of the file, to be read by AI.
