@@ -66,6 +66,20 @@ Available tools:
 See [DOCS.md](DOCS.md) for details about usage and configuration.
 
 
+## Project structure
+
+- [`src/`](/src/): source code
+  - [`src/scraper.py`](/src/scraper.py): main scraper functions
+  - [`src/files.py`](/src/files.py): file scraping functions (downloading)
+  - [`src/config.py`](/src/config.py): configuration file operations (read, write, validate)
+  - [`src/browser.py`](/src/browser.py): browser utilities (opening, closing, retrying)
+  - [`src/type_hints.py`](/src/type_hints.py): type hints for config and scraped data
+
+- [`scouting/`](/scouting/): preliminary code, used to investigate functionality
+- [`server.py`](/server.py): MCP server, exposing tools to AI
+- [`DOCS.md`](/DOCS.md): detailed instructions, for humans and AI
+
+
 ## Development
 
 Currently, the project is in development.
