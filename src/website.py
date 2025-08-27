@@ -15,7 +15,12 @@ logger.setLevel(log.INFO)
 
 
 # search engines used for web search
-SEARCH_BACKEND = "duckduckgo, bing, brave, google"
+#SEARCH_BACKEND = "duckduckgo, bing, brave, google"
+
+# BUG: duckduckgo search backend "is not available", ddgs switches to auto
+# we remove duckduckgo from the list, to make ddgs use only desired backends
+# TODO: check again when ddgs is updated
+SEARCH_BACKEND = "bing, brave, google"
 
 
 # URL AND DOMAIN UTILITIES
@@ -128,9 +133,15 @@ def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[Candidat
     query = f'"{manuCode}"'
     if hints: query += " " + " ".join(hints)
 
-    # searches the web, composing candidates
+    # searches the web
+    logger.info("Searching the web for %s...", query)
+    results = DDGS().text(query, max_results=10, backend=SEARCH_BACKEND)
+    for index, result in enumerate(results):
+        logger.debug("Search result %d: %s", index, result["href"])
+
+    # composes candidates
     candidates = []
-    for result in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
+    for result in results:
 
         # extracts domain from url 
         domain = DomainFromUrl(result["href"])
@@ -167,8 +178,14 @@ def MatchUrlPatternToWebResults(urlPattern: str, manuCode: str, hints: list[str]
     # replaces * with .* and evaluates as regex
     regex = re.compile(regexPattern.replace("*", ".*"))
 
-    # searches on the web, getting the first url matching the regex
-    for searchResult in DDGS().text(query, max_results=10, backend=SEARCH_BACKEND):
+    # searches on the web
+    logger.debug("Searching the web for %s...", query)
+    results = DDGS().text(query, max_results=10, backend=SEARCH_BACKEND)
+    for index, result in enumerate(results):
+        logger.debug("Search result %d: %s", index, result["href"])
+
+    # gets the first url matching the regex
+    for searchResult in results:
         if regex.match(searchResult["href"]):
             return searchResult["href"]
 
