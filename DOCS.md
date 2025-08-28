@@ -240,3 +240,6 @@ Example: `WriteConfig(config, domain="example.com")`
 
 This documentation file can be read using `ReadDocs` function (MCP tool `read_docs`),
 which returns the text of the file, to be read by AI.
+
+The AI can use the `read_new_website_guide` tool to get a step-by-step instructions
+to add a new website to the configuration file, cooperating with the user.

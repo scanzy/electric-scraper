@@ -62,6 +62,7 @@ Available tools:
 - `ReadConfigDocs`: returns the [DOCS.md](DOCS.md) file, as detailed instructions for AI
 - `ReadConfig`: reads the configuration file, to check known websites and settings
 - `WriteConfig`: writes the configuration file, to add new websites or update settings
+- `ReadNewWebsiteGuide`: returns instructions to let AI add a new website to the config
 
 See [DOCS.md](DOCS.md) for details about usage and configuration.
 
@@ -94,7 +95,7 @@ TODO (high priority):
 - [x] add selector to recognize not found items
 - [x] add websearch for url pattern matching
 - [x] add support for subdomain matching, to support .co.jp domains
-- [ ] add prompt to let AI analyze new sites and add them to config
+- [x] add prompt to let AI analyze new sites and add them to config
 
 TODO (low priority):
 - [o] add tests for MCP server

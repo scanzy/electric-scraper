@@ -8,8 +8,33 @@ import pathlib as pl
 # adds the parent directory to the path
 # this allows to run tests with the IDE play button
 sys.path.append(str(pl.Path(__file__).parent.parent))
+
+from server import ReadDocs, ReadNewWebsiteGuide
 from src.config import ReadConfig, WriteConfig
 from src.scraper import ScrapeComponents, ScrapeComponent, GetCandidatesFromHints
+
+
+def TestReadDocs():
+    """Tests the read docs functionality, ensuring it's not empty."""
+    docs = ReadDocs()
+    assert docs is not None and len(docs) > 0
+    print(docs)
+
+
+def TestReadNewWebsiteGuide():
+    """Tests the read new website guide functionality, ensuring it's not empty."""
+
+    steps = list(range(0, 7))
+    for step in steps:
+
+        # reads guide, ensuring it's not empty
+        guide = ReadNewWebsiteGuide(step)
+        assert guide is not None and len(guide) > 0
+
+        # prints guide
+        print(f"{'=' * 10} Step {step} {'=' * 10}")
+        print(guide)
+        print()
 
 
 def PretryPrintDict(data: t.Mapping) -> None:
@@ -87,8 +112,9 @@ def TestNotFound():
 
 
 if __name__ == "__main__":
-    pass
 
+    #TestReadDocs()
+    TestReadNewWebsiteGuide()
     #PretryPrintDict(ReadConfig())
     #TestConfigReadWrite()
     #TestMatching()
