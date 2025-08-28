@@ -81,27 +81,7 @@ See [DOCS.md](DOCS.md) for details about usage and configuration.
 - [`scouting/`](/scouting/): preliminary code, used to investigate functionality
 - [`server.py`](/server.py): MCP server, exposing tools to AI
 - [`DOCS.md`](/DOCS.md): detailed instructions, for humans and AI
+- [`DEVELOPMENT.md`](/DEV.md): development notes, TODO list, problems and solutions
 
-
-## Development
-
-Currently, the project is in development.
+NOTE: currently, the project is in development.
 However, basic field scraping works properly!
-
-TODO (high priority):
-- [x] replace manuCode pattern matching with hints/keywords system
-- [x] add config validation
-- [x] implement retry on other websites if scraping fails
-- [x] add selector to recognize not found items
-- [x] add websearch for url pattern matching
-- [x] add support for subdomain matching, to support .co.jp domains
-- [x] add prompt to let AI analyze new sites and add them to config
-
-TODO (low priority):
-- [o] add tests for MCP server
-- [ ] use optional fields in config: keywords, notFound, fields, files
-- [ ] use jsonschema library for config validation
-- [ ] add tests for config functions, using monkeypatching
-- [ ] upload to PyPI
-- [ ] improve and activate pdf scraping
-- [ ] add support for images, not working yet
