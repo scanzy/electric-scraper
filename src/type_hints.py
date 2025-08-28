@@ -14,7 +14,7 @@ class FileConfigEntry(t.TypedDict, total=False):
     path: str      # Target file path (relative to basePath) with placeholders
 
 
-class WebsiteEntry(t.TypedDict):
+class WebsiteEntry(t.TypedDict, total=False):
     """Configuration entry for a website."""
     keywords: list[str]
     url: str

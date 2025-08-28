@@ -1,2 +1,5 @@
 __pycache__/
 *.json
+
+# do not ignore schema file
+!config-schema.json

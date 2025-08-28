@@ -175,34 +175,51 @@ The configuration file is a json file, with the following structure:
 {
   "<website1>": {
 
-    // keywords to match the website to scrape from, using hints parameter
+    // [OPTIONAL] comment for the website configuration
+    // will be ignored by the scraper, but can be used as reference or notes
+    "comment": "<comment>",
+
+    // [OPTIONAL] keywords to match the website to scrape from, using hints parameter
     // providing one of these keywords in hints, will match the website
     "keywords": ["<keyword1>", "<keyword2>"],
 
-    // url template with {manuCode} placeholder, for url generation
+    // [REQUIRED] url template with {manuCode} placeholder, for url generation
     // or url matching pattern, with {manuCode} placeholder and * wildcard
     "url": "<url_template_or_pattern_with_{manuCode}_and_*>",
 
-    // css selectors to wait for page to load, or check for not found page
+    // [REQUIRED] css selector to wait for page to load
     "wait": "<css selector>",
+
+    // [OPTIONAL] css selector to check for not found page
     "notFound": "<css selector>",
 
-    // data fields to scrape
+    // [OPTIONAL] data fields to scrape, with css selectors to find elements
     "fields": {
       "<field1>": "<css selector>",
       "<field2>": "<css selector>",
-    // other fields
+      // other fields
     },
 
-    // files to download
+    // [OPTIONAL] files to download
+    // 2 format options, one with selector, one with url (alternative)
     "files": {
       "<file1>": {
-        "selector": "<css selector to download link>",
-        "filename": "<filename_with_{manuCode}_and_{ext}_and_other_fields>"
-      },
-      "<file2>": {
-        "selector": "<css selector to download link>",
-        "filename": "<filename_with_{manuCode}_and_{ext}_and_other_fields>"
+
+        // [REQUIRED] css selector to find the download link
+        // this is ALTERNATIVE to "url" field
+        "selector": "<css selector>",
+
+        // [REQUIRED] url template with {manuCode} and other fields placeholders
+        // this is ALTERNATIVE to "selector" field
+        "url": "<url_template_with_{manuCode}_and_other_fields>",
+
+        // [REQUIRED] path filename template with {manuCode} and {ext} placeholders,
+        // to be substituted with the scraped data, and actual file extension
+        // and appended to basePath to get the actual path to save the file
+        "path": "<filename_path_with_{manuCode}_and_{ext}_and_other_fields>",
+
+        // [OPTIONAL] comment for debugging or notes for this file
+        "comment": "<comment>",
       },
       // other files
     },
@@ -216,11 +233,14 @@ The configuration file is a json file, with the following structure:
 }
 ```
 
-The `url` field must contain the {manuCode} placeholder to be substituted with the manifacturer code.
-If the url contains * wildcard, it will be used to match the url from search results.
-Otherwise, the url will be used as is, simply substituting the manifacturer code.
+For every website entry, the only required fields are `url` and `wait`.
+In files configuration, `path` is required, and either one of `selector` or `url` is required.
 
-The `filename` field of the file configuration supports placeholders:
+If the `url` contains * wildcard, it will be used to match the url from search results.
+Otherwise, the url must contain the {manuCode} placeholder,
+to be substituted with the manifacturer code to compose the url to scrape from.
+
+The `path` field of the file configuration supports placeholders:
 - `{manuCode}`: manifacturer code
 - `{ext}`: extension of the file
 - scraped data fields, from `fields` output dictionary, e.g. `{description}` for field `description`
@@ -237,9 +257,11 @@ Example: `ReadConfig(domainOrUrl="example.com")`
 
 WriteConfig takes a dictionary as input, and writes it to the configuration file.
 Example: `WriteConfig(config, domain="example.com")`
+To delete an entry, set the entry parameter to None.
 
 This documentation file can be read using `ReadDocs` function (MCP tool `read_docs`),
 which returns the text of the file, to be read by AI.
 
-The AI can use the `read_new_website_guide` tool to get a step-by-step instructions
+The AI can use the `read_new_website_guide` tool to get step-by-step instructions
 to add a new website to the configuration file, cooperating with the user.
+This requires additional MCP tools to inspect websites and read the HTML.

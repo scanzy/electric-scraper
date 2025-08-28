@@ -4,7 +4,7 @@ import glob
 from pathlib import Path
 from fastmcp import FastMCP
 
-from src.config import ReadConfig, WriteConfig
+from src.config import ReadConfigSafe, WriteConfig
 from src.scraper import ScrapeComponents
 
 
@@ -33,7 +33,7 @@ mcp = FastMCP(
 
 # MCP tools
 mcp.tool("scrape_components")(ScrapeComponents)
-mcp.tool("read_config")(ReadConfig)
+mcp.tool("read_config")(ReadConfigSafe)
 mcp.tool("write_config")(WriteConfig)
 mcp.tool("read_docs")(ReadDocs)
 mcp.tool("read_new_website_guide")(ReadNewWebsiteGuide)

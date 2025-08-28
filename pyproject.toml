@@ -8,6 +8,7 @@ dependencies = [
     "ddgs>=9.5.4",
     "fastmcp>=2.10.5",
     "html2text>=2025.4.15",
+    "jsonschema>=4.25.1",
     "requests>=2.32.4",
     "selenium>=4.34.2",
 ]

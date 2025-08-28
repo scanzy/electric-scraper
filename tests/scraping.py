@@ -42,38 +42,6 @@ def PretryPrintDict(data: t.Mapping) -> None:
     print(json.dumps(data, indent=2))
 
 
-def TestConfigReadWrite():
-    """Test the config read/write functions."""
-
-    # reads all config
-    allConfig = ReadConfig()
-    print("All config:")
-    PretryPrintDict(allConfig)
-
-    # checks if config is empty
-    if len(allConfig) == 0:
-        print("No websites found in config.")
-        return
-
-    # reads missing type and/or website
-    assert len(ReadConfig(domainOrUrl="missing")) == 0
-
-    # reads only the first website
-    firstWebsite = list(allConfig.keys())[0]
-    config = ReadConfig(domainOrUrl=firstWebsite)
-    print(f"Config for {firstWebsite}:")
-    PretryPrintDict(config)
-
-    # checks if config is empty
-    if len(config) == 0:
-        print(f"No types found for website {firstWebsite}.")
-        return
-
-    # writes config
-    WriteConfig(config[firstWebsite], domain=firstWebsite)
-    print(f"Config for {firstWebsite} written to file.")
-
-
 def TestMatching():
     """Test the matching functionality."""
     
@@ -114,9 +82,8 @@ def TestNotFound():
 if __name__ == "__main__":
 
     #TestReadDocs()
-    TestReadNewWebsiteGuide()
+    #TestReadNewWebsiteGuide()
     #PretryPrintDict(ReadConfig())
-    #TestConfigReadWrite()
-    #TestMatching()
-    #TestScraper()
-    #TestNotFound()
+    TestMatching()
+    TestScraper()
+    TestNotFound()

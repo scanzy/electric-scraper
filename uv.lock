@@ -227,15 +227,17 @@ dependencies = [
     { name = "ddgs" },
     { name = "fastmcp" },
     { name = "html2text" },
+    { name = "jsonschema" },
     { name = "requests" },
     { name = "selenium" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "ddgs", specifier = ">=9.4.3" },
+    { name = "ddgs", specifier = ">=9.5.4" },
     { name = "fastmcp", specifier = ">=2.10.5" },
     { name = "html2text", specifier = ">=2025.4.15" },
+    { name = "jsonschema", specifier = ">=4.25.1" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "selenium", specifier = ">=4.34.2" },
 ]

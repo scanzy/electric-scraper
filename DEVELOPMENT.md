@@ -13,13 +13,14 @@ TODO (high priority):
 - [x] add websearch for url pattern matching
 - [x] add support for subdomain matching, to support .co.jp domains
 - [x] add prompt to let AI analyze new sites and add them to config
+- [x] use jsonschema library for config validation
+- [x] use optional fields in config: keywords, notFound, fields, files, comment
+- [ ] handle correctly config errors in scraping calls
 - [ ] add support for images downloading, not working yet
-- [ ] use jsonschema library for config validation
-- [ ] use optional fields in config: keywords, notFound, fields, files, comment
 
 TODO (low priority):
 - [o] add tests for MCP server
-- [ ] add tests for config functions, using monkeypatching
+- [x] add tests for config functions, using monkeypatching
 - [ ] find a solution to access page HTML with MCP server (see below)
 - [ ] upload to PyPI
 - [ ] improve and activate pdf scraping

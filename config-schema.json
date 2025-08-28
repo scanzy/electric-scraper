@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Electric Scraper Configuration Schema",
+  "description": "Schema for validating electric scraper website configurations",
+  "patternProperties": {
+    "^[a-zA-Z0-9.-]+$": {
+      "type": "object",
+      "title": "Website Entry",
+      "description": "Configuration for a single website",
+      "properties": {
+        "comment": {
+          "type": "string",
+          "description": "Optional comment for the website configuration"
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Keywords to match the website using hints parameter",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "url": {
+          "type": "string",
+          "description": "URL template with {manuCode} placeholder or URL pattern with * wildcard",
+          "minLength": 1
+        },
+        "wait": {
+          "type": "string",
+          "description": "CSS selector to wait for page to load",
+          "minLength": 1
+        },
+        "notFound": {
+          "type": "string",
+          "description": "CSS selector to check for not found page",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "object",
+          "description": "Data fields to scrape",
+          "patternProperties": {
+            ".*": {
+              "type": "string",
+              "minLength": 1,
+              "description": "CSS selector for the field"
+            }
+          },
+          "additionalProperties": false
+        },
+        "files": {
+          "type": "object",
+          "description": "Files to download",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "title": "File Entry",
+              "description": "Configuration for a single file to download",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Path where to save the file",
+                  "minLength": 1
+                },
+                "selector": {
+                  "type": "string",
+                  "description": "CSS selector to find download link",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "description": "Direct URL to download the file",
+                  "minLength": 1
+                },
+                "comment": {
+                  "type": "string",
+                  "description": "Optional comment for debugging or notes"
+                }
+              },
+              "required": ["path"],
+              "oneOf": [
+                {
+                  "required": ["selector"],
+                  "not": {"required": ["url"]}
+                },
+                {
+                  "required": ["url"],
+                  "not": {"required": ["selector"]}
+                }
+              ],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": ["url", "wait"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
