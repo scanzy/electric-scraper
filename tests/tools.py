@@ -1,5 +1,12 @@
+import sys
 import asyncio
+import pathlib as pl
+
 from fastmcp.client import Client
+
+# adds the parent directory to the path
+# this allows to run tests with the IDE play button
+sys.path.append(str(pl.Path(__file__).parent.parent))
 
 
 async def RunTests() -> None:

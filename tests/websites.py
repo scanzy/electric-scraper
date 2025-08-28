@@ -7,6 +7,7 @@ import pathlib
 # adds the parent directory to the path
 # this allows to run tests with the IDE play button
 sys.path.append(str(pathlib.Path(__file__).parent.parent))
+
 from src.website import MatchUrlToDomains, DomainFromUrl
 from tests.utils import RunTests
 
