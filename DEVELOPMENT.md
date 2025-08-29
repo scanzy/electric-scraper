@@ -1,32 +1,16 @@
 
 # Development notes
 
-Currently, the project is in development.
-However, basic field scraping works properly!
+The project is stable! Fields and files scraping work properly.
+However, it misses some features, listed below.
 
-
-TODO (high priority):
-- [x] replace manuCode pattern matching with hints/keywords system
-- [x] add config validation
-- [x] implement retry on other websites if scraping fails
-- [x] add selector to recognize not found items
-- [x] add websearch for url pattern matching
-- [x] add support for subdomain matching, to support .co.jp domains
-- [x] add prompt to let AI analyze new sites and add them to config
-- [x] use jsonschema library for config validation
-- [x] use optional fields in config: keywords, notFound, fields, files, comment
-- [x] handle correctly config errors in scraping calls
-- [ ] add support for images downloading, not working yet
-
-TODO (low priority):
+TODO:
 - [o] add tests for MCP server
-- [x] add tests for config functions, using monkeypatching
 - [ ] find a solution to access page HTML with MCP server (see below)
 - [ ] upload to PyPI
-- [ ] improve and activate pdf scraping
 
 
-## Problems and solutionsfor new websites scouting
+## Problems and solutions for new websites scouting
 
 The instructions for new websites scouting assume to have an existing MCP server to work with HTML.
 

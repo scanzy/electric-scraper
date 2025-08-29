@@ -28,7 +28,7 @@ def ReadNewWebsiteGuide(step: int = 0) -> str:
 
 mcp = FastMCP(
     name="Electric Components Scraper",
-    dependencies=["fastmcp", "selenium", "requests", "html2text", "ddgs"],
+    dependencies=["fastmcp", "selenium", "requests", "html2text", "jsonschema", "ddgs"],
 )
 
 # MCP tools

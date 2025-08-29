@@ -45,6 +45,7 @@ The project allows to:
         "--with", "selenium",
         "--with", "html2text",
         "--with", "requests",
+        "--with", "jsonschema",
         "--with", "ddgs",
         "/path/to/server.py"
       ]
@@ -77,11 +78,9 @@ See [DOCS.md](DOCS.md) for details about usage and configuration.
   - [`src/browser.py`](/src/browser.py): browser utilities (opening, closing, retrying)
   - [`src/type_hints.py`](/src/type_hints.py): type hints for config and scraped data
 
-- [`tests/`](/tests/): tests to check functionality works properly
-- [`scouting/`](/scouting/): preliminary code, used to investigate functionality
 - [`server.py`](/server.py): MCP server, exposing tools to AI
+- [`config-schema.json`](/config-schema.json): JSON schema for configuration file
 - [`DOCS.md`](/DOCS.md): detailed instructions, for humans and AI
 - [`DEVELOPMENT.md`](/DEV.md): development notes, TODO list, problems and solutions
-
-NOTE: currently, the project is in development.
-However, basic field scraping works properly!
+- [`tests/`](/tests/): tests to check functionality works properly
+- [`scouting/`](/scouting/): preliminary code, used to investigate functionality
