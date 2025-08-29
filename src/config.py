@@ -84,7 +84,7 @@ def ReadConfig(domainOrUrl: str = "") -> Config:
         return config
     
     # raises an exception with the errors
-    raise ValueError(f"Invalid configuration. {len(config['errors'])} errors: "
+    raise ValueError(f"Invalid configuration. {len(config['errors'])} error(s):\n" +
         "\n".join(config['errors']))
 
 

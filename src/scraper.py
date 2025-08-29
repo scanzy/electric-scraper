@@ -49,15 +49,16 @@ def ScrapeFromWebsite(
     """Scrapes data of a component from a website, retrying on session expiration."""
 
     # detects if url is a pattern (contains *)
-    if "*" in entry["url"]:
-        url = MatchUrlPatternToWebResults(entry["url"], manuCode, matchedHints)
+    urlConfig = entry["url"] # type: ignore  # required field
+    if "*" in urlConfig:
+        url = MatchUrlPatternToWebResults(urlConfig, manuCode, matchedHints)
         if url == "":
             raise ComponentNotFoundError("Unable to match url pattern to web search results")
 
     # if the url is not a pattern, it is a template
     else:
         # formats url replacing {manuCode} with the provided manuCode
-        url = entry["url"].format(manuCode=manuCode)
+        url = urlConfig.format(manuCode=manuCode)
 
     # opens browser, or gets existing one
     driver = GetBrowser()
@@ -67,26 +68,31 @@ def ScrapeFromWebsite(
     driver.get(url)
     
     # composes selector to wait for content or not found page
-    waitSelector = entry["wait"]
-    notFoundSelector = entry["notFound"]
+    waitSelector = entry["wait"] # type: ignore  # required field
+    notFoundSelector = entry.get("notFound", "") # optional field
     if notFoundSelector:
         waitSelector += ", " + notFoundSelector
     
     # waits for page to load
     WaitElement(driver, waitSelector)   
-    RaiseOnNotFound(driver, notFoundSelector)
 
-    # scrapes fields
-    logger.debug("Scraping fields...")
-    scrapedFields = ScrapeFields(driver, entry["fields"], format)
+    # detects not-found page, if configured
+    if notFoundSelector:
+        RaiseOnNotFound(driver, notFoundSelector)
+
+    # scrapes fields, if any configured
+    fieldsConfig = entry.get("fields", {})
+    logger.debug(f"Scraping {len(fieldsConfig)} fields...")
+    scrapedFields = ScrapeFields(driver, fieldsConfig, format)
     
     # gets files config, filtering by files parameter
-    filesConfig = entry["files"]
+    filesConfig = entry.get("files", {})
     if files is not None:
+        # TODO: detect if some file tags are not configured, and show warning
         filesConfig = {key: value for key, value in filesConfig.items() if key in files}
 
-    # scrapes files
-    logger.debug("Scraping files...")
+    # scrapes files, if configured
+    logger.debug(f"Scraping {len(filesConfig)} files...")
     scrapedFiles = ScrapeFiles(driver, basePath, filesConfig,
         data = {**scrapedFields, "manuCode": manuCode, "ext": "{ext}"})
 

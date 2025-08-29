@@ -15,7 +15,7 @@ TODO (high priority):
 - [x] add prompt to let AI analyze new sites and add them to config
 - [x] use jsonschema library for config validation
 - [x] use optional fields in config: keywords, notFound, fields, files, comment
-- [ ] handle correctly config errors in scraping calls
+- [x] handle correctly config errors in scraping calls
 - [ ] add support for images downloading, not working yet
 
 TODO (low priority):
