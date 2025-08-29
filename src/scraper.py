@@ -91,10 +91,12 @@ def ScrapeFromWebsite(
         # TODO: detect if some file tags are not configured, and show warning
         filesConfig = {key: value for key, value in filesConfig.items() if key in files}
 
-    # scrapes files, if configured
+    # scrapes files, as configured
     logger.debug(f"Scraping {len(filesConfig)} files...")
     scrapedFiles = ScrapeFiles(driver, basePath, filesConfig,
-        data = {**scrapedFields, "manuCode": manuCode, "ext": "{ext}"})
+        data = {**scrapedFields, "manuCode": manuCode, "ext": "{ext}"},
+        skipDirectDownload = entry.get("skipDirectDownload", False),
+    )
 
     # closes browser, if configured
     if closeBrowser:

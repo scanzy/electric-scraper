@@ -68,6 +68,16 @@ Composed URL: "https://example.com/manifacturer_xyz/part-1234567890"
 ```
 
 
+### File download
+
+The scraper uses 3 different methods to download files:
+1. **direct download** from the url, with a simple HTTP request, without using the browser
+2. **image extraction** from the page, using javascript to get the image as base64 string
+3. **browser download** using a new browser tab to download the file
+
+The scraper tries the direct download first, then uses the other methods if it fails.
+
+
 ### Error handling
 
 If the scraping fails for a candidate website, the scraper will try again,
@@ -223,6 +233,10 @@ The configuration file is a json file, with the following structure:
       },
       // other files
     },
+
+    // [OPTIONAL] whether to skip direct download (default = false)
+    // useful to speed up scraping for sites with cookies or other restrictions
+    "skipDirectDownload": true,
   },
 
   "<website2>": {
@@ -244,6 +258,10 @@ The `path` field of the file configuration supports placeholders:
 - `{manuCode}`: manifacturer code
 - `{ext}`: extension of the file
 - scraped data fields, from `fields` output dictionary, e.g. `{description}` for field `description`
+
+For websites with cookies or other restrictions, the direct download of files will not work.
+In such cases, set `skipDirectDownload` to true, to skip the direct download.
+This will use the other methods to download the files, speeding up the scraping process.
 
 
 ## Other tools

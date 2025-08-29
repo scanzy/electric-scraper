@@ -242,25 +242,40 @@ def DownloadWithBrowser(driver: webdriver.Firefox, url: str, targetPath: str) ->
     }
 
 
-def DownloadFile(driver: webdriver.Firefox, url: str, tagName: str, selector: str, targetPath: str) -> ScrapedFile:
+def DownloadFile(driver: webdriver.Firefox, url: str, tagName: str, basePath: str,
+    fileConfig: FileConfigEntry, data: dict[str, t.Optional[str]], skipDirectDownload: bool,
+) -> ScrapedFile:
     """Downloads a file from the specified url to the specified path.
     Uses different methods depending on the case: image or other file.
     """
 
-    # tries direct download
-    # TODO: add option to skip this where it doesn't work
-    logger.info(f"Trying direct download from url: {url}")
-    result = DownloadDirect(url, targetPath)
+    # composes the full target path
 
-    # if successful, returns the result
-    if result.get("result") == "success":
-        return result
-
-    # if not successful, uses the fallback method
-    logger.info(f"Direct download failed: {result.get('result')}")
+    # NOTE: we already perform config validation during loading
+    targetPath = fileConfig["path"] # type: ignore
     
+    # replaces placeholders with data, and composes absolute path
+    targetPath = targetPath.format(**data)
+    targetPath = os.path.join(basePath, targetPath)
+
+    # unless configured to skip, tries direct download
+    if skipDirectDownload == False:
+        logger.info(f"Trying direct download from url: {url}")
+        result = DownloadDirect(url, targetPath)
+
+        # if successful, returns the result
+        if result.get("result") == "success":
+            return result
+
+        # if not successful, uses the fallback method
+        logger.info(f"Direct download failed: {result.get('result')}")
+    
+    else:
+        logger.info(f"Skipping direct download")
+
     # images extracxtion using javascript
     if tagName == "img":
+        selector = fileConfig["selector"] # type: ignore
         logger.info(f"Trying image extraction from selector: {selector}")
         return DownloadImage(driver, selector, targetPath)
 
@@ -274,6 +289,7 @@ def ScrapeFiles(
     basePath: str,
     files: dict[str, FileConfigEntry],
     data:  dict[str, t.Optional[str]],
+    skipDirectDownload: bool,
 ) -> dict[str, ScrapedFile]:
     """Scrapes files from the current page, using the specified config.
     Tries different methods to download the file, depending on the file type.
@@ -295,17 +311,10 @@ def ScrapeFiles(
             scrapedFiles[tag] = {"result": f"error: {e}"}
             continue
 
-        # NOTE: we already perform config validation during loading
-        targetPath = fileConfig["path"] # type: ignore
-        
-        # replaces placeholders with data, and composes absolute path
-        targetPath = targetPath.format(**data)
-        targetPath = os.path.join(basePath, targetPath)
-
         try:
             # downloads the file with the appropriate method, saving the result
-            selector = fileConfig.get("selector", "")
-            scrapedFiles[tag] = DownloadFile(driver, url, tagName, selector, targetPath)
+            scrapedFiles[tag] = DownloadFile(driver, url, tagName,
+                basePath, fileConfig, data, skipDirectDownload)
 
         # returns error if something goes wrong
         except Exception as e:

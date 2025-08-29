@@ -148,6 +148,7 @@ def TestConfigValidation():
         ("notFound", str),
         ("fields", dict),
         ("files", dict),
+        ("skipDirectDownload", bool),
     ]:
         wrongValue = next(x for x in ["invalid", 3] if type(x) != correctType)
         wrongEntry = copy.deepcopy(entry1)

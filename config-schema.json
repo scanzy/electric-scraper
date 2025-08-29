@@ -93,6 +93,10 @@
             }
           },
           "additionalProperties": false
+        },
+        "skipDirectDownload": {
+          "type": "boolean",
+          "description": "Whether to skip direct download. Useful for sites with cookies or other restrictions."
         }
       },
       "required": ["url", "wait"],
