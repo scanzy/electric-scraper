@@ -71,6 +71,16 @@ def TestScraper():
         PretryPrintDict(r)
 
 
+def TestScrapeFiles():
+    """Test the file download functionality."""
+
+    # existing components
+    codes = ["DTP04-4P", "DTP06-4S", "DTM06-12SA"]
+    results = ScrapeComponents(manuCodes=codes, hints=["te.com"], basePath="tests/downloads", closeBrowser=True)
+    for r in results:
+        PretryPrintDict(r)
+
+
 def TestNotFound():
     """Test the not found functionality."""
 
@@ -84,6 +94,7 @@ if __name__ == "__main__":
     #TestReadDocs()
     #TestReadNewWebsiteGuide()
     #PretryPrintDict(ReadConfig())
-    TestMatching()
-    TestScraper()
-    TestNotFound()
+    #TestMatching()
+    #TestScraper()
+    TestScrapeFiles()
+    #TestNotFound()

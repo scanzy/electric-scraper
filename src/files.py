@@ -1,9 +1,21 @@
-"""File url scraper and downloader."""
+"""File downloader, using different methods depending on the file type."""
+
+# Methods to download files
+# 1. direct: directly from url, using requests. Simple but no header or cookies.
+# 2. image: injecting javascript into the page, to get base64 string of the image.
+# 3. browser: using selenium to open a new tab with the file url.
+#    The browser must be properly configured to download files automatically.
+
+# File scraping process:
+# 1. Get file url from element selector, or compose from url template
+# 2. Try direct download, unless disabled in config
+# 3. If direct fails, use fallback method: image (for images), browser (other files)
 
 import os
 import time
 import json
 import requests
+import base64
 
 import typing as t
 import logging as log
@@ -11,22 +23,18 @@ from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
 
 from src.browser import GetDownloadPath
 from src.type_hints import FileConfigEntry, ScrapedFile
 
 
+logger = log.getLogger(__name__)
+logger.setLevel(log.INFO)
+
+
 DOWNLOAD_TIMEOUT = 10     # timeout for waiting for file to download
 DOWNLOAD_INTERVAL = 0.5   # interval for checking for new files
-DOWNLOAD_DELAY = 0.5      # delay for moving file to target path
-
-
-def SanitizeUrlForJS(url: str) -> str:
-    """Sanitizes URL to prevent JavaScript injection attacks.
-    Uses JSON encoding to properly escape special characters.
-    """
-    # JSON.stringify properly escapes quotes, backslashes, and other special chars
-    return json.dumps(url)
 
 
 # Methods to download files
@@ -39,49 +47,59 @@ def SanitizeUrlForJS(url: str) -> str:
 # TODO: add option in config to choose the desired method, since method 1 hangs on some websites.
 
 
-def GetFileUrl(driver: webdriver.Firefox,
-    config: FileConfigEntry, data: dict[str, t.Optional[str]]) -> str:
-    """Gets the url of a file from the current page, using either the specified css selector
-    or the provided url, with placeholders replaced by data.
+def GetFileUrlAndTagName(driver: webdriver.Firefox,
+    config: FileConfigEntry, data: dict[str, t.Optional[str]]) -> tuple[str, str]:
+    """Gets the url of the file to scrape, together with the HTML tag name of the element that contains it.
+    Uses either the specified css selector or the provided url template, with placeholders replaced by data.
     """
 
-    # gets info to scrape file
-    selector = config.get("selector", None)
-    url = config.get("url", None)
-
-    # checks only one parameter is set
-    if (selector is None and url is None) or \
-        (selector is not None and url is not None):
-        raise ValueError(f"Specify either 'selector' or 'url'")
-
     # uses url if specified, replacing placeholders with data
-    if url is not None: return url.format(**data)
+    url = config.get("url", "")
+    if url: return url.format(**data), "" # no element
 
-    # finds file url using css selector
-    assert selector is not None
-    element = driver.find_element(By.CSS_SELECTOR, selector)
+    # NOTE: we already perform config validation during loading
+    selector = config["selector"] # type: ignore
+
+    # finds file element using css selector
+    try:
+        element = driver.find_element(By.CSS_SELECTOR, selector)
+        tagName = element.tag_name
+    except NoSuchElementException:
+        raise ValueError(f"Cannot locate element with selector: {selector}")
 
     # gets url in element (link or image)
     fileUrl = element.get_attribute("href") or element.get_attribute("src")
     if fileUrl is None:
-        raise ValueError(f"File url not found for selector: {selector}")
-    return fileUrl
+        raise ValueError(f"'href' or 'src' not found for element {tagName} with selector: {selector}")
+    if fileUrl == "":
+        raise ValueError(f"Empty 'href' or 'src' found for element {tagName} with selector: {selector}")
+
+    return fileUrl, tagName
 
 
 def DownloadDirect(url: str, targetPath: str) -> ScrapedFile:
     """Downloads a file from the specified url to the specified path."""
 
-    # downloads the image
-    response = requests.get(url, timeout=DOWNLOAD_TIMEOUT)
-    if response.status_code != 200:
+    try:
+        # downloads data from url, returning error if it fails
+        response = requests.get(url, timeout=DOWNLOAD_TIMEOUT)
+        response.raise_for_status()
+    except Exception as e:
         return {
-            "result": f"error: HTTP {response.status_code}",
+            "result": f"error: {e}",
             "url": url,
         }
 
-    # writes image to file
+    # replaces extension placeholder with the actual extension
+    # TODO: read extension from Content-Disposition HTTP header
     ext = Path(url).suffix.lower().strip(".")
-    with open(targetPath.format(ext=ext), 'wb') as file:
+    targetPath = targetPath.format(ext=ext)
+
+    # creates target directory tree if it doesn't exist
+    os.makedirs(os.path.dirname(targetPath), exist_ok=True)
+
+    # writes data to file
+    with open(targetPath, 'wb') as file:
         file.write(response.content)
 
     return {
@@ -92,77 +110,80 @@ def DownloadDirect(url: str, targetPath: str) -> ScrapedFile:
     }
 
 
-def DownloadImage(driver: webdriver.Firefox, selector: str) -> None:
-    """Downloads the image opened in the current tab to the specified path."""
-
-    # downloads the image
-    js = f"var img = document.querySelector('{selector}');" + """
-    if (img) {
-        // Creates a canvas to convert the image
-        var canvas = document.createElement('canvas');
-        var ctx = canvas.getContext('2d');
-        
-        // Sets the canvas dimensions
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        
-        // Draws the image on the canvas
-        ctx.drawImage(img, 0, 0);
-        
-        // Converts to blob
-        canvas.toBlob(function(blob) {
-            // Creates an URL for the blob
-            var url = URL.createObjectURL(blob);
-            
-            // Creates a link for download
-            var link = document.createElement('a');
-            link.href = url;
-            link.download = 'image.png';
-
-            // NOTE: is this needed?
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Cleans the URL
-            // NOTE: maybe this should be done after the download is completed?
-            URL.revokeObjectURL(url);
-        }, 'image/png');
-    }
+def DownloadImage(driver: webdriver.Firefox, selector: str, targetPath: str) -> ScrapedFile:
+    """Downloads an image opened in the current tab to the specified target path.
+    The target path must contain the {ext} placeholder, replaced with image extension.
+    Returns a tuple with target path and size of the downloaded image.
     """
-    driver.execute_script(js)
+
+    # destination image extension
+    ext: t.Literal["png", "jpeg"] = "png"
+    js = f"const ext = '{ext}';"
+
+    # injects js to get image element
+    # NOTE: json.dumps is used to escape the selector and avoid malicious code injection
+    js += f"const img = document.querySelector({json.dumps(selector)});"
+
+    # injects js to get base64 string of the image
+    js += """
+    // creates a canvas to convert the image
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+
+    // draws image on canvas
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight);
+
+    // converts canvas to base64
+    return canvas.toDataURL(ext);
+    """
+
+    # executes composed js, getting the base64 string, with prefix
+    imgBase64 = driver.execute_script(js)
+    logger.info(f"Got base64 with length: {len(imgBase64)} of image with selector: {selector}")
+
+    # substitutes extension placeholder with the actual extension
+    targetPath = targetPath.format(ext=ext)
+
+    # saves image to file, decoding base64
+    # (removing the data:image/png;base64, prefix)
+    with open(targetPath, "wb") as f:
+        imgBytes = base64.b64decode(imgBase64.split(",")[1])
+        f.write(imgBytes)
+    logger.info(f"Image downloaded to: {targetPath}, size: {len(imgBytes)}")
+
+    # gets the url of the image, if it's not "data:image/..."
+    url = driver.find_element(By.CSS_SELECTOR, selector).get_attribute("src") or ""
+    if url.startswith("data:image/"): url = ""
+
+    return {
+        "result": "success",
+        "url": url,
+        "path": targetPath,
+        "size": len(imgBytes),
+    }
 
 
-def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> ScrapedFile:
-    """Downloads a file using the specified url to the specified path."""
+def DownloadWithBrowser(driver: webdriver.Firefox, url: str, targetPath: str) -> ScrapedFile:
+    """Downloads a file opening a new browser tab with the specified url.
+    It works with PDF files and other non-media files with supported browser preview.
+    """
 
-    # for images, uses direct download
-    # BUG: this doesn't work since firefox doesn't download the image
-    if Path(url).suffix.lower() in [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]:
-        raise NotImplementedError("Image download is not implemented yet")
-        return DownloadDirect(url, targetPath)
-
-    # gets download path and existing files
+    # gets browser download path and existing files
     downloadPath = GetDownloadPath()
     initialFiles = set(os.listdir(downloadPath))
 
     # checks existing part files, that may block the download
     for file in initialFiles:
         if file.endswith(".part"):
-            log.warning(f"Part file found: {file}")
+            logger.warning(f"Part file found: {file}")
 
-    # opens a new tab with the file url (URL sanitized to prevent injection)
+    # opens a new tab with the file url
+    # NOTE: url is sanitized using json.dumps to prevent injection of malicious code
     # the tab will close after the file is downloaded
-    sanitizedUrl = SanitizeUrlForJS(url)
-    driver.execute_script(f"window.open({sanitizedUrl}, '_blank');")
-    driver.switch_to.window(driver.window_handles[-1])
-    log.info(f"Opened new tab with url: {url}, waiting for file to download...")
-
-    # for images, downloads the image using javascript
-    # NOTE: this is needed because firefox doesn't download the image
-    # if Path(url).suffix.lower() in [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]:
-    # TODO: add option in config to choose the desired download method
-    #    DownloadImage(driver, selector)
+    driver.execute_script(f"window.open({json.dumps(url)}, '_blank');")
+    logger.info(f"Opened new tab with url: {url}, waiting for file to download...")
 
     # waits for file to download, detecting new files in the download path
     downloadedFile = ""
@@ -180,8 +201,11 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
 
             # checks file size
             downloadedFile = os.path.join(downloadPath, newFile)
-            if os.path.getsize(downloadedFile) == 0: continue
-            break # file found, exit loop
+            if os.path.getsize(downloadedFile) != 0:
+                break # file found, exit loop
+
+            # no valid file found, until now
+            downloadedFile = ""
         
         # exits outer loop if file is found
         if downloadedFile != "": break
@@ -193,7 +217,7 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
     if downloadedFile == "":
         raise TimeoutError(f"File not found in {downloadPath} after {DOWNLOAD_TIMEOUT} seconds")
 
-    log.info(f"File downloaded to: {downloadedFile}")
+    logger.info(f"File downloaded to: {downloadedFile}")
 
     # creates target directory if it doesn't exist
     os.makedirs(os.path.dirname(targetPath), exist_ok=True)
@@ -207,7 +231,7 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
 
     # moves file to the target path
     os.rename(downloadedFile, targetPath)
-    log.info(f"File moved to: {targetPath}")
+    logger.info(f"File moved to: {targetPath}")
 
     # adds file to the scraped files
     return {
@@ -218,46 +242,74 @@ def DownloadFile(driver: webdriver.Firefox, url: str, targetPath: str) -> Scrape
     }
 
 
+def DownloadFile(driver: webdriver.Firefox, url: str, tagName: str, selector: str, targetPath: str) -> ScrapedFile:
+    """Downloads a file from the specified url to the specified path.
+    Uses different methods depending on the case: image or other file.
+    """
+
+    # tries direct download
+    # TODO: add option to skip this where it doesn't work
+    logger.info(f"Trying direct download from url: {url}")
+    result = DownloadDirect(url, targetPath)
+
+    # if successful, returns the result
+    if result.get("result") == "success":
+        return result
+
+    # if not successful, uses the fallback method
+    logger.info(f"Direct download failed: {result.get('result')}")
+    
+    # images extracxtion using javascript
+    if tagName == "img":
+        logger.info(f"Trying image extraction from selector: {selector}")
+        return DownloadImage(driver, selector, targetPath)
+
+    # downloads using browser
+    logger.info(f"Trying browser download from url: {url}")
+    return DownloadWithBrowser(driver, url, targetPath)
+
+
 def ScrapeFiles(
     driver: webdriver.Firefox,
     basePath: str,
     files: dict[str, FileConfigEntry],
     data:  dict[str, t.Optional[str]],
 ) -> dict[str, ScrapedFile]:
-    """Scrapes files from the current page, using the specified file config."""
+    """Scrapes files from the current page, using the specified config.
+    Tries different methods to download the file, depending on the file type.
+    """
 
     scrapedFiles = {}
     for tag, fileConfig in files.items():
-        log.info(f"Scraping file: {tag}")
+        logger.info(f"Scraping file: {tag}")
 
         # focuses the first tab
-        # this is needed because the browser may have opened multiple tabs
+        # this is needed because the browser may have opened multiple tabs to download files
         driver.switch_to.window(driver.window_handles[0])
 
-        # tries to get file url
+        # tries to get file url and, if selector is specified, the tag name of the element
         try:
-            url = GetFileUrl(driver, fileConfig, data)
+            url, tagName = GetFileUrlAndTagName(driver, fileConfig, data)
         except Exception as e:
-            log.error(f"Error getting file url for '{tag}': {e}")
+            logger.error(f"Error getting file url for '{tag}': {e}")
             scrapedFiles[tag] = {"result": f"error: {e}"}
             continue
 
-        try:
-            # composes relative target path
-            targetPath = fileConfig.get("path", None)
-            if targetPath is None:
-                raise ValueError("'path' is not set for file {tag}")
-            
-            # replaces placeholders with data, and composes absolute path
-            targetPath = targetPath.format(**data)
-            targetPath = os.path.join(basePath, targetPath)
+        # NOTE: we already perform config validation during loading
+        targetPath = fileConfig["path"] # type: ignore
+        
+        # replaces placeholders with data, and composes absolute path
+        targetPath = targetPath.format(**data)
+        targetPath = os.path.join(basePath, targetPath)
 
-            # tries to download file
-            scrapedFiles[tag] = DownloadFile(driver, url, targetPath)
+        try:
+            # downloads the file with the appropriate method, saving the result
+            selector = fileConfig.get("selector", "")
+            scrapedFiles[tag] = DownloadFile(driver, url, tagName, selector, targetPath)
 
         # returns error if something goes wrong
         except Exception as e:
-            log.error(f"Error downloading file '{tag}': {e}")
+            logger.error(f"Error downloading file '{tag}': {e}")
             scrapedFiles[tag] = {"url": url, "result": f"error: {e}"}
             continue
 
