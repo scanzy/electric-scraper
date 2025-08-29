@@ -39,6 +39,7 @@ class ScrapedFile(t.TypedDict, total=False):
     url: str
     path: str
     size: int
+    method: t.Literal["direct", "image", "browser"]
 
 
 class ScrapedComponentData(t.TypedDict, total=False):

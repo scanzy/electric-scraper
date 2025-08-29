@@ -107,6 +107,7 @@ def DownloadDirect(url: str, targetPath: str) -> ScrapedFile:
         "url": url,
         "path": targetPath,
         "size": os.path.getsize(targetPath),
+        "method": "direct",
     }
 
 
@@ -162,6 +163,7 @@ def DownloadImage(driver: webdriver.Firefox, selector: str, targetPath: str) -> 
         "url": url,
         "path": targetPath,
         "size": len(imgBytes),
+        "method": "image",
     }
 
 
@@ -239,6 +241,7 @@ def DownloadWithBrowser(driver: webdriver.Firefox, url: str, targetPath: str) ->
         "url": url,
         "path": targetPath,
         "size": os.path.getsize(targetPath),
+        "method": "browser",
     }
 
 

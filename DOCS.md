@@ -109,6 +109,7 @@ Structure of `files` dictionary, in output:
 - `url`: url of the downloaded file
 - `path`: path of the file, saved to disk
 - `size`: size of the file in bytes
+- `method`: `direct`/`image`/`browser`, method used to download the file
 
 
 Example output:
@@ -125,20 +126,21 @@ Example output:
       "color": "black"
     },
     "files": {
+      "image": {
+        "url": "https://example.com/image_1234567890.jpg",
+        "path": "/path/to/image-1234567890-black.pdf",
+        "method": "image",
+        "size": 2000000,
+      },
       "datasheet": {
         "url": "https://example.com/datasheet_1234567890.pdf",
         "path": "/path/to/datasheet-1234567890-black.pdf",
-        "size": 1000000
+        "size": 1000000,
+        "method": "direct",
       },
       "drawing": {
-        "url": "https://example.com/drawing_1234567890.pdf",
-        "path": "/path/to/drawing-1234567890-black.pdf",
-        "size": 2000000
-      },
-      "image": {
         // this file was not found
-        "result": "error: 404 Not Found",
-        "url": "https://example.com/image_1234567890.jpg",
+        "result": "error: could not locate selector: [a[data-title='Drawing']]",
       }
     },
   },
