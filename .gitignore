@@ -1,6 +1,2 @@
 __pycache__/
 tests/downloads/
-*.json
-
-# do not ignore schema file
-!config-schema.json

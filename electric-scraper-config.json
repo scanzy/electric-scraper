@@ -1,0 +1,234 @@
+{
+  "molex.com": {
+    "keywords": [
+      "molex",
+      "connector"
+    ],
+    "url": "https://www.molex.com/en-us/products/part-detail/{manuCode}",
+    "wait": "#part-details",
+    "notFound": "img[alt='404 Error']",
+    "fields": {
+      "description": "h1",
+      "fileUL": "td[data-key='ul']",
+      "AWG": "td[data-key='wireSizeAwg']",
+      "mm2": "td[data-key='wireSizeMm']"
+    },
+    "files": {
+      "drawing": {
+        "selector": ".cmp-resourcelist__accordion__content a.cmp-resourcelist__action-download",
+        "path": "molex.com\\{manuCode}_drawing.pdf"
+      },
+      "datasheet": {
+        "selector": ".cmp-resourcelist__resources-item:first-of-type a.cmp-resourcelist__action-download",
+        "path": "molex.com\\{manuCode}_datasheet.pdf"
+      },
+      "image": {
+        "selector": ".pdp-mediagallery__image img",
+        "path": "molex.com\\{manuCode}_image.{ext}"
+      }
+    },
+    "skipDirectDownload": true
+  },
+  "te.com": {
+    "keywords": [
+      "te",
+      "amp",
+      "deutsch",
+      "connector"
+    ],
+    "url": "https://www.te.com/en/product-{manuCode}.html",
+    "wait": "h1",
+    "notFound": ".full-page-error",
+    "fields": {
+      "description": ".pdp-friendly-part-description h2",
+      "fileUL": "[href*='UL_CERT']",
+      "details": ".right-content-column"
+    },
+    "files": {
+      "drawing": {
+        "selector": "a[data-doc-title='Customer Drawing']",
+        "path": "te.com\\{manuCode}_drawing.pdf"
+      },
+      "image": {
+        "selector": ".main-image img",
+        "path": "te.com\\{manuCode}_image.{ext}"
+      }
+    },
+    "skipDirectDownload": true
+  },
+  "aptiv.com": {
+    "keywords": [
+      "aptiv",
+      "connector"
+    ],
+    "url": "https://www.aptiv.com/en/solutions/connection-systems/catalog/item?id={manuCode}",
+    "wait": ".detail-head",
+    "fields": {
+      "description": ".product-info:not(.d-none) .basic-info:not(.d-none) .description .field-value"
+    },
+    "files": {},
+    "comment": "cannot use notFound, the 404 page state is equal to the loading page state"
+  },
+  "mouser.com": {
+    "keywords": [
+      "mouser",
+      "connector"
+    ],
+    "url": "https://*.mouser.com/ProductDetail/*/{manuCode}",
+    "wait": "#spnDescription",
+    "notFound": "img[src*='404']",
+    "fields": {
+      "description": "#spnDescription"
+    },
+    "files": {
+      "datasheet": {
+        "selector": "a.pdp-datasheet_0",
+        "path": "mouser.com\\{manuCode}_datasheet.pdf"
+      },
+      "drawing": {
+        "selector": "a[data-doc-title='Customer Drawing']",
+        "path": "mouser.com\\{manuCode}_drawing.pdf"
+      },
+      "image": {
+        "selector": "#defaultImg",
+        "path": "mouser.com\\{manuCode}_image.{ext}"
+      }
+    },
+    "comment": "robot protection blocks some request"
+  },
+  "digikey.com": {
+    "keywords": [
+      "digikey",
+      "connector"
+    ],
+    "url": "https://www.digikey.com/*/products/detail/*",
+    "wait": "[data-testid='product-info']",
+    "notFound": "#errorHeader",
+    "fields": {
+      "description": "[track-data='ref_page_event=Copy Short Description']",
+      "description_long": "[track-data='ref_page_event=Copy Expand Description']"
+    },
+    "files": {}
+  },
+  "ittcannon.com": {
+    "keywords": [
+      "itt",
+      "cannon",
+      "ittcannon",
+      "connector"
+    ],
+    "url": "https://www.ittcannon.com/part-detail/?partnumber={manuCode}",
+    "wait": ".partDetails",
+    "notFound": "main:not(:has(.productSpecification))",
+    "fields": {
+      "description": ".partDetails"
+    },
+    "files": {}
+  },
+  "fastcontek.com": {
+    "keywords": [
+      "araymond",
+      "a.raymond",
+      "connector"
+    ],
+    "url": "https://fastcontek.com/product/araymond-{manuCode}/",
+    "wait": ".ast-woocommerce-container",
+    "notFound": ".ast-404-layout-1",
+    "fields": {
+      "description": ".woocommerce-product-details__short-description"
+    },
+    "files": {}
+  },
+  "bosch-connectors.com": {
+    "keywords": [
+      "bosch",
+      "connector"
+    ],
+    "url": "https://bosch-connectors.com/bcp/b2bshop-psconnectors/*",
+    "wait": "#pdpItemName",
+    "notFound": ".bcp-error__container",
+    "fields": {
+      "description": "#pdpItemName"
+    },
+    "files": {}
+  },
+  "rs-online.com": {
+    "keywords": [
+      "rs",
+      "rs-online"
+    ],
+    "url": "https://*.rs-online.com/web/p/*",
+    "wait": "[data-testid='main-content']",
+    "notFound": "[data-testid='terminal-node-page-info']",
+    "fields": {
+      "description": "[data-testid='long-description']"
+    },
+    "files": {}
+  },
+  "farnell.com": {
+    "keywords": [
+      "farnell",
+      "connector"
+    ],
+    "url": "https://*.farnell.com/*",
+    "wait": ".pdpDetails-container",
+    "notFound": "#pf_standard_error_page_espot_01",
+    "fields": {
+      "description": "[data-testid='catalog.productDetailsPage.copy-to-clipboard__subtitle']"
+    },
+    "files": {}
+  },
+  "lemo.com": {
+    "keywords": [
+      "lemo",
+      "connector"
+    ],
+    "url": "https://www.lemo.com/int_en/solutions/*",
+    "wait": ".header-product__header",
+    "notFound": "img[alt='error 404']",
+    "fields": {
+      "description": ".header-product__definition"
+    },
+    "files": {}
+  },
+  "sws.co.jp": {
+    "keywords": [
+      "sws",
+      "sumitomo",
+      "connector"
+    ],
+    "url": "https://prd.sws.co.jp/components/en/detail.php?number_s={manuCode}",
+    "wait": "#main",
+    "notFound": "#main:not(:has(#specification))",
+    "fields": {
+      "description": "#main section.spec:first-of-type"
+    },
+    "files": {},
+    "comment": "manuCode should be provided without dash"
+  },
+  "lcsc.com": {
+    "keywords": [
+      "lcsc",
+      "connector"
+    ],
+    "url": "https://www.lcsc.com/product-detail/*.html",
+    "wait": ".mainImgWrap",
+    "notFound": "div > span.warning--text",
+    "fields": {
+      "manuCode": ".tableInfoWrap tr:nth-child(2) td:nth-child(2)",
+      "lcscCode": ".tableInfoWrap tr:nth-child(3) td:nth-child(2)",
+      "description": ".tableInfoWrap tr:nth-child(6) td:nth-child(2)"
+    },
+    "files": {
+      "datasheet": {
+        "url": "https://www.lcsc.com/datasheet/{lcscCode}.pdf",
+        "path": "lcsc.com\\{manuCode}_datasheet.pdf"
+      },
+      "image": {
+        "selector": ".mainImgWrap .v-image__image",
+        "path": "lcsc.com\\{manuCode}_image.{ext}",
+        "comment": "Image in css background (donwload not implemented yet)"
+      }
+    }
+  }
+}
