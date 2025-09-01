@@ -1,0 +1,10 @@
+{
+    "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+    "source": {
+        "path": "server.py"
+    },
+    "environment": {
+        "python": ">=3.13",
+        "dependencies": ["fastmcp", "selenium", "requests", "html2text", "jsonschema", "ddgs"]
+    }
+}

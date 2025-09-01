@@ -28,6 +28,8 @@ def ReadNewWebsiteGuide(step: int = 0) -> str:
 
 mcp = FastMCP(
     name="Electric Components Scraper",
+
+    # TODO: remove this once fastmcp.json works properly
     dependencies=["fastmcp", "selenium", "requests", "html2text", "jsonschema", "ddgs"],
 )
 
