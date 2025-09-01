@@ -16,6 +16,7 @@ import time
 import json
 import requests
 import base64
+import urllib
 
 import typing as t
 import logging as log
@@ -92,7 +93,9 @@ def DownloadDirect(url: str, targetPath: str) -> ScrapedFile:
 
     # replaces extension placeholder with the actual extension
     # TODO: read extension from Content-Disposition HTTP header
-    ext = Path(url).suffix.lower().strip(".")
+    # Extract extension from URL path (without query parameters)
+    urlPath = urllib.parse.urlparse(url)
+    ext = Path(urlPath.path).suffix.lower().strip(".")
     targetPath = targetPath.format(ext=ext)
 
     # creates target directory tree if it doesn't exist

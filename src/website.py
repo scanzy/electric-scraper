@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 import typing as t
 import logging as log
 
@@ -31,17 +32,16 @@ def DomainFromUrl(url: str) -> str:
     """Extracts the lowercase domain from a url, removing www. and protocol.
     Example: https://WWW.MOLEX.COM/molex/products/family/10362 -> molex.com
     """
-
-    # removes protocol
-    if "://" in url:
-        url = url.split("/")[2]
-
-    # removes pages after the domain
-    elif "/" in url:
-        url = url.split("/")[0]
-
-    # removes www.
-    return url.replace("www.", "").lower()
+    
+    # if no protocol is specified, assume http:// for urlparse to work correctly
+    if "://" not in url:
+        url = "http://" + url
+    
+    # get the netloc (domain + port), split to remove port if present
+    domain = urllib.parse.urlparse(url).netloc.split(':')[0]
+    
+    # removes www. prefix and converts to lowercase
+    return domain.replace("www.", "").lower()
 
 
 def MatchUrlToDomains(url: str, domains: list[str]) -> str:
@@ -93,7 +93,7 @@ def MatchWebsiteToHints(lowerHints: list[str], domain: str, entry: WebsiteEntry)
             pass
 
         # +3 for each hint that exactly matches a configured keyword
-        if hint in entry["keywords"]:
+        if hint in entry.get("keywords", []):
             score += 3
             if hint not in matchedHints:
                 matchedHints.append(hint)
