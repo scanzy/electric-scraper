@@ -6,7 +6,7 @@ However, it misses some features, listed below.
 
 TODO:
 - [o] add tests for MCP server
-- [ ] find a solution to access page HTML with MCP server (see below)
+- [ ] find a solution to access page HTML with MCP server to analyze new websites (see below)
 - [ ] upload to PyPI
 
 

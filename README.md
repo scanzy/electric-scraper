@@ -13,12 +13,12 @@ Include only trusted websites in scraping settings, to avoid downloading malicio
 
 The project allows to:
 - **search for components** on the web, using DuckDuckGo or other search engines
+- **scrape multiple components** in a single call, using the same browser instance
 - **autodetect scraping settings** from known websites, reading configuration file
-- **scrape entire pages** in html, markdown or text format (as requested)
+- **scrape in different formats** as requested: html, markdown or text
 - **scrape specific data** from the page, using the provided CSS selectors
 - **download files** from the page, using CSS selectors to find download links
-- **analyze new websites** to find scraping settings (CSS selectors, url templates, etc.)
-- **scrape multiple components** in a single call, using the same browser instance
+- (WORK IN PROGRESS) **analyze new websites** to find scraping settings (CSS selectors, url templates, etc.)
 
 
 ## Requirements
