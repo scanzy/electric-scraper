@@ -22,18 +22,10 @@ logger.setLevel(log.INFO)
 # SCRAPING FROM WEBSITE
 # =====================
 
+
 class ComponentNotFoundError(Exception):
     """Raised when a component is not found on the website."""
     pass
-
-
-def RaiseOnNotFound(driver: webdriver.Firefox, notFoundSelector: str) -> None:
-    """Raises ComponentNotFoundError if the not-found selector is present in the page."""
-    try: 
-        driver.find_element(By.CSS_SELECTOR, notFoundSelector)
-        raise ComponentNotFoundError("Detected not-found selector in page")
-    except NoSuchElementException:
-        pass
 
 
 @RetryOnException(on=InvalidSessionIdException, init=ResetBrowser)
@@ -74,11 +66,28 @@ def ScrapeFromWebsite(
         waitSelector += ", " + notFoundSelector
     
     # waits for page to load
-    WaitElement(driver, waitSelector)   
+    try:
+        WaitElement(driver, waitSelector) 
+    except RuntimeError as e:
+
+        # raises error if no known element is found
+        # this indicates website not properly configured
+        if notFoundSelector:
+            raise RuntimeError(
+                f"Could not find 'wait' nor 'notFound' element in page: {e}")
+        
+        # if no notFound selector is configured, the timeout indicates page not found
+        # this is not a configuration error, but an invalid component code
+        else:
+            raise ComponentNotFoundError from e
 
     # detects not-found page, if configured
     if notFoundSelector:
-        RaiseOnNotFound(driver, notFoundSelector)
+        try: 
+            driver.find_element(By.CSS_SELECTOR, notFoundSelector)
+            raise ComponentNotFoundError("Detected component-not-found page")
+        except NoSuchElementException:
+            pass
 
     # scrapes fields, if any configured
     fieldsConfig = entry.get("fields", {})

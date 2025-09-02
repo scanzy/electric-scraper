@@ -8,6 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 
 # Configure logging
@@ -78,11 +79,17 @@ def OpenBrowser() -> webdriver.Firefox:
 
 
 def WaitElement(driver: webdriver.Firefox, selector: str) -> None:
-    """Waits for an element to be present in the browser."""
+    """Waits for an element to be present in the browser.
+    Raises RuntimeError if the element is not found.
+    """
 
     logger.info(f"Waiting for element: {selector}")
     wait = WebDriverWait(driver, BROWSER_TIMEOUT)
-    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+    try:
+        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+    except TimeoutException:
+        raise RuntimeError(
+            f"Element not found after timeout ({BROWSER_TIMEOUT} seconds): {selector}")
 
 
 def CloseBrowser() -> None:
