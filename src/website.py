@@ -127,7 +127,9 @@ def GetCandidatesFromHints(hints: list[str], config: "Config") -> list[Candidate
 
 
 def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[CandidateWebsite]:
-    """Gets candidate websites for a component, searching online."""
+    """Gets candidate websites for a component, searching online.
+    This is used to match url patterns to find web pages, so it ignores pdf results.
+    """
 
     # composes the search query: exact match for manuCode, then hints
     query = f'"{manuCode}"'
@@ -142,6 +144,10 @@ def GetCandidatesFromWebSearch(manuCode: str, hints: list[str]) -> list[Candidat
     # composes candidates
     candidates = []
     for result in results:
+
+        # skips pdf results, we are looking for pages
+        if urllib.parse.urlparse(result["href"]).path.endswith(".pdf"):
+            continue
 
         # extracts domain from url 
         domain = DomainFromUrl(result["href"])

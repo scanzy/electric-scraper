@@ -16,7 +16,7 @@ import time
 import json
 import requests
 import base64
-import urllib
+import urllib.parse
 
 import typing as t
 import logging as log
