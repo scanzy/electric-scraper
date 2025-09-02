@@ -64,9 +64,20 @@
     "url": "https://www.aptiv.com/en/solutions/connection-systems/catalog/item?id={manuCode}",
     "wait": ".detail-head",
     "fields": {
-      "description": ".product-info:not(.d-none) .basic-info:not(.d-none) .description .field-value"
+      "manuCode": ".part-number h1",
+      "description": ".product-info:not(.d-none) .basic-info:not(.d-none) .description .field-value",
+      "compatible": "#compatible-parts"
     },
-    "files": {},
+    "files": {
+      "image": {
+        "selector": ".main-image img",
+        "path": "aptiv.com\\{manuCode}_image.{ext}"
+      },
+      "datasheet": {
+        "selector": "#documents .tab-heading + div:first-of-type .d-list .link a",
+        "path": "aptiv.com\\{manuCode}_datasheet.pdf"
+      }
+    },
     "comment": "cannot use notFound, the 404 page state is equal to the loading page state"
   },
   "mouser.com": {
@@ -94,7 +105,7 @@
         "path": "mouser.com\\{manuCode}_image.{ext}"
       }
     },
-    "comment": "robot protection blocks some request"
+    "comment": "Robot protection asks for captcha, then blocks all requests. Sometimes it works..."
   },
   "digikey.com": {
     "keywords": [
@@ -105,10 +116,25 @@
     "wait": "[data-testid='product-info']",
     "notFound": "#errorHeader",
     "fields": {
+      "manuCode": "[data-testid='mfr-number']",
       "description": "[track-data='ref_page_event=Copy Short Description']",
       "description_long": "[track-data='ref_page_event=Copy Expand Description']"
     },
-    "files": {}
+    "files": {
+      "image": {
+        "selector": "data-testid='carousel-main-image'] img",
+        "path": "digikey.com\\{manuCode}_image.{ext}"
+      },
+      "datasheet": {
+        "selector": "a[data-testid='datasheet-download']",
+        "path": "digikey.com\\{manuCode}_datasheet.{ext}"
+      },
+      "drawing": {
+        "selector": "a[track-data*='Product Drawings']",
+        "path": "digikey.com\\{manuCode}_drawing.{ext}"
+      }
+    },
+    "comment": "Robot protection asks to hold a button for a few seconds"
   },
   "ittcannon.com": {
     "keywords": [
@@ -123,7 +149,13 @@
     "fields": {
       "description": ".partDetails"
     },
-    "files": {}
+    "files": {
+      "datasheet": {
+        "selector": ".part_heroPanel .buttonWrapper .left a.button[href*='file-download']",
+        "path": "ittcannon.com\\{manuCode}_datasheet.{ext}"
+      }
+    },
+    "comment": "No image available in the page"
   },
   "fastcontek.com": {
     "keywords": [
@@ -137,20 +169,28 @@
     "fields": {
       "description": ".woocommerce-product-details__short-description"
     },
-    "files": {}
+    "files": {},
+    "comment": "Recently they added a chinese login-protected the page"
   },
   "bosch-connectors.com": {
     "keywords": [
       "bosch",
       "connector"
     ],
-    "url": "https://bosch-connectors.com/bcp/b2bshop-psconnectors/*",
+    "url": "https://bosch-connectors.com/bcp/b2bshop-psconnectors/*/p/*",
     "wait": "#pdpItemName",
     "notFound": ".bcp-error__container",
     "fields": {
+      "manuCodeWithPrefix": "#pdpArticleNo",
       "description": "#pdpItemName"
     },
-    "files": {}
+    "files": {
+      "image": {
+        "selector": ".A-Image",
+        "path": "bosch-connectors.com\\{manuCode}_image.{ext}"
+      }
+    },
+    "comment": "No technical documents available in the page"
   },
   "rs-online.com": {
     "keywords": [
@@ -161,22 +201,42 @@
     "wait": "[data-testid='main-content']",
     "notFound": "[data-testid='terminal-node-page-info']",
     "fields": {
+      "manuCode": "[data-testid='key-details-desktop'] dd:nth-child(2)",
       "description": "[data-testid='long-description']"
     },
-    "files": {}
+    "files": {
+      "image": {
+        "selector": "#gallery-container-stub img",
+        "path": "rs-online.com\\{manuCode}_image.{ext}"
+      },
+      "datasheet": {
+        "selector": "[data-testid='technical-documents-section'] a:first-of-type",
+        "path": "rs-online.com\\{manuCode}_datasheet.{ext}"
+      }
+    }
   },
   "farnell.com": {
     "keywords": [
       "farnell",
       "connector"
     ],
-    "url": "https://*.farnell.com/*",
+    "url": "https://it.farnell.com/*",
     "wait": ".pdpDetails-container",
     "notFound": "#pf_standard_error_page_espot_01",
     "fields": {
       "description": "[data-testid='catalog.productDetailsPage.copy-to-clipboard__subtitle']"
     },
-    "files": {}
+    "files": {
+      "image": {
+        "selector": "a[data-testid='catalog.productDetailsPage.image_main'] img",
+        "path": "it.farnell.com\\{manuCode}_image.{ext}"
+      },
+      "drawing": {
+        "selector": "a[data-testid='catalog.productDetailsPage.data-sheet__attachment-link']",
+        "path": "it.farnell.com\\{manuCode}_drawing.{ext}"
+      }
+    },
+    "comment": "Config valid only for italian site. Other farnell sites have different selectors."
   },
   "lemo.com": {
     "keywords": [
@@ -187,9 +247,19 @@
     "wait": ".header-product__header",
     "notFound": "img[alt='error 404']",
     "fields": {
+      "manuCode": "h1.header-product__title",
       "description": ".header-product__definition"
     },
-    "files": {}
+    "files": {
+      "image": {
+        "selector": "img.fotorama__img",
+        "path": "lemo.com\\{manuCode}_image.{ext}"
+      },
+      "drawing": {
+        "selector": "a.card-document[href*='.pdf']",
+        "path": "lemo.com\\{manuCode}_drawing.{ext}"
+      }
+    }
   },
   "sws.co.jp": {
     "keywords": [
@@ -201,10 +271,21 @@
     "wait": "#main",
     "notFound": "#main:not(:has(#specification))",
     "fields": {
+      "manuCodeWithDash": "#specification dt.productCode",
       "description": "#main section.spec:first-of-type"
     },
-    "files": {},
-    "comment": "manuCode should be provided without dash"
+    "files": {
+      "image": {
+        "selector": "#productImg img",
+        "path": "sws.co.jp\\{manuCode}_image.{ext}",
+        "comment": "URL template: https://prd.sws.co.jp/components/products/photo_img/{manuCode}.jpg"
+      },
+      "drawing": {
+        "url": "https://prd.sws.co.jp/components/products/draw_img/{manuCode}.pdf",
+        "path": "sws.co.jp\\{manuCode}_drawing.{ext}"
+      }
+    },
+    "comment": "manuCode must be provided without dash"
   },
   "lcsc.com": {
     "keywords": [
@@ -222,7 +303,7 @@
     "files": {
       "datasheet": {
         "url": "https://www.lcsc.com/datasheet/{lcscCode}.pdf",
-        "path": "lcsc.com\\{manuCode}_datasheet.pdf"
+        "path": "lcsc.com\\{manuCode}_datasheet.{ext}"
       },
       "image": {
         "selector": ".mainImgWrap .v-image__image",
@@ -230,5 +311,85 @@
         "comment": "Image in css background (donwload not implemented yet)"
       }
     }
+  },
+  "jae.com": {
+    "keywords": [
+      "jae",
+      "connector"
+    ],
+    "url": "https://www.jae.com/en/connectors/series/detail/product/*",
+    "wait": ".l-main__middle",
+    "notFound": "#page_notfound",
+    "fields": {
+      "manuCode": ".l-main__middle__body h1",
+      "description": ".c-column__body .c-column__item.c-column--txt p:nth-child(2)"
+    },
+    "files": {
+      "image": {
+        "selector": ".l-main__middle__body .c-column__item.c-column--img img",
+        "path": "jae.com\\{manuCode}_image.{ext}"
+      },
+      "drawing": {
+        "selector": "a.c-btn__link[href*='/direct/topics/'][href*='index=0']",
+        "path": "jae.com\\{manuCode}_drawing.pdf"
+      },
+      "datasheet": {
+        "selector": "a.c-btn__link[href*='/direct/page/generatePDF/']",
+        "path": "jae.com\\{manuCode}_datasheet.pdf"
+      }
+    },
+    "skipDirectDownload": false,
+    "comment": "Download links do not have extension, so we cannot use {ext} placeholder"
+  },
+  "amphenol-cs.com": {
+    "keywords": [
+      "amphenol",
+      "connector"
+    ],
+    "url": "https://www.amphenol-cs.com/product/{manuCode}.html",
+    "wait": "[data-cy='PriceAdjustments-partSpecificationSection']",
+    "notFound": "p[data-cy='ErrorView-message']",
+    "fields": {
+      "title": "[data-cy='ProductFullDetail-productName']",
+      "description": "main div[class*='richContent-root']"
+    },
+    "files": {
+      "drawing": {
+        "selector": "#documentation a[href*='/files/drawing/']",
+        "path": "amphenol-cs.com\\{manuCode}_drawing.{ext}"
+      },
+      "datasheet": {
+        "selector": "#documentation a[href*='/files/documentation/datasheet/']",
+        "path": "amphenol-cs.com\\{manuCode}_datasheet.{ext}"
+      },
+      "image": {
+        "url": "https://cdn.amphenol-cs.com/media/catalog/product/images/{manuCode}.png",
+        "path": "amphenol-cs.com\\{manuCode}_image.{ext}"
+      }
+    },
+    "comment": "Advanced bot protection that asks to wait more than 10 seconds"
+  },
+  "connector.yazaki-group.com": {
+    "keywords": [
+      "yazaki",
+      "connector"
+    ],
+    "url": "https://connector.yazaki-group.com/cgi-bin/english/detail.cgi?part_id={manuCode}",
+    "wait": "#mainContentsWrap",
+    "notFound": "#mainContentsWrap > p:only-child",
+    "fields": {
+      "description": "#mainContentsWrap h2"
+    },
+    "files": {
+      "image": {
+        "selector": "a[data-lightbox='ProductImage'] img",
+        "path": "yazaki-group.com\\{manuCode}_image.{ext}"
+      },
+      "drawing": {
+        "selector": "#mainContentsWrap a.basicButtonRed.download[href*='DRAW']",
+        "path": "yazaki-group.com\\{manuCode}_drawing.{ext}"
+      }
+    },
+    "skipDirectDownload": false
   }
 }
