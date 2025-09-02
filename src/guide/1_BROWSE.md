@@ -20,7 +20,7 @@ Obtain preliminary information about the site to analyze:
     - URL template: to easily compose the URL of a page of the site of interest,
         by only replacing {manuCode} with the component code
     - URL pattern: to recognize the URL of a page of the site of interest,
-        by inserting the wildcard * where there is other info.
+        by inserting the wildcard(s) * where there is other info.
         Where possible, the URL pattern may include the {manuCode} placeholder,
         to be replaced with the component code.
 8. Present the string to the user, explaining its meaning in a simple way

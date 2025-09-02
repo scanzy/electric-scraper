@@ -24,7 +24,7 @@
         },
         "url": {
           "type": "string",
-          "description": "URL template with {manuCode} placeholder or URL pattern with * wildcard",
+          "description": "URL template with {manuCode} placeholder or URL pattern with * wildcard(s)",
           "minLength": 1
         },
         "wait": {
@@ -39,7 +39,7 @@
         },
         "fields": {
           "type": "object",
-          "description": "Data fields to scrape",
+          "description": "Data fields to scrape. Include manuCode field if possible, to detect wrong results.",
           "patternProperties": {
             ".*": {
               "type": "string",

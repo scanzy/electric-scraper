@@ -62,7 +62,7 @@ def GetWebsiteErrors(domain: str, entry: dict) -> list[str]:
     if url and isinstance(url, str) and "*" not in url and "{manuCode}" not in url:
         return [
             f"❌ Error in 'url' of website '{domain}':\n"
-            f"   URL must contain placeholder '{{manuCode}}' or wildcard '*'\n"
+            f"   URL must contain placeholder '{{manuCode}}' or wildcard(s) '*'\n"
             f"   Current value: '{url}'\n"
             f"   Correct example: 'https://example.com/part-{{manuCode}}'"
         ]

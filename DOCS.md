@@ -43,7 +43,7 @@ See the next sections for more details and examples about hints and keywords.
 
 The scraper can be configured to compose the url in either of two ways:
 - I. substituting the manifacturer code in a **url template**
-- II. matching urls from search results to a **url pattern** (with * wildcard)
+- II. matching urls from search results to a **url pattern** with * wildcard(s)
 
 For websites with **static urls** (always the same url, except the manifacturer code),
 the scraper composes the url by substituting the manifacturer code in the url template.
@@ -66,6 +66,11 @@ URL pattern in config: "https://example.com/*/part-{manuCode}"
 manuCode: "1234567890"
 Composed URL: "https://example.com/manifacturer_xyz/part-1234567890"
 ```
+
+WARNING: some websites do not include the manifacturer code in the url.
+This may cause the web search to return incorrect results, finding wrong components.
+When possible, configure the scraper to extract the manifacturer code from the page,
+and check if it matches the manifacturer code searched for, to detect wrong results.
 
 
 ### File download
@@ -196,7 +201,7 @@ The configuration file is a json file, with the following structure:
     "keywords": ["<keyword1>", "<keyword2>"],
 
     // [REQUIRED] url template with {manuCode} placeholder, for url generation
-    // or url matching pattern, with {manuCode} placeholder and * wildcard
+    // or url matching pattern, with {manuCode} placeholder and * wildcard(s)
     "url": "<url_template_or_pattern_with_{manuCode}_and_*>",
 
     // [REQUIRED] css selector to wait for page to load
@@ -252,7 +257,7 @@ The configuration file is a json file, with the following structure:
 For every website entry, the only required fields are `url` and `wait`.
 In files configuration, `path` is required, and either one of `selector` or `url` is required.
 
-If the `url` contains * wildcard, it will be used to match the url from search results.
+If the `url` contains * wildcard(s), it will be used to match the url from search results.
 Otherwise, the url must contain the {manuCode} placeholder,
 to be substituted with the manifacturer code to compose the url to scrape from.
 
